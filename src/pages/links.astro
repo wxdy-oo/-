@@ -1,0 +1,636 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Navbar from '../components/Navbar.astro';
+import PageHeader from '../components/PageHeader.astro';
+import Footer from '../components/Footer.astro';
+import FloatingWidgets from '../components/FloatingWidgets.astro';
+
+const PALETTE = [
+  ['#f7b955', '#e8890b'],
+  ['#c9a2ec', '#9b6ee0'],
+  ['#9ec4f8', '#5f92e6'],
+  ['#9fe0c0', '#4fbf91'],
+  ['#f7a8c4', '#e87ba6'],
+  ['#f5d08a', '#e0a83f'],
+];
+
+const avatarGrad = (name: string) => {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  const [a, b] = PALETTE[h % PALETTE.length];
+  return `linear-gradient(140deg, ${a}, ${b})`;
+};
+
+const links = [
+  { name: '阿岚的博客', desc: '前端、设计与一点摄影，审美很在线。', url: 'https://example.com', tags: ['前端', '设计'], cat: 'tech' },
+  { name: '南栀', desc: '记录生活与代码的碎碎念，很温柔的一个站点。', url: 'https://example.com', tags: ['生活'], cat: 'life' },
+  { name: '小鹿乱撞', desc: '算法与成长的爬坑日记，干货不少。', url: 'https://example.com', tags: ['算法'], cat: 'tech' },
+  { name: '拾光笔记', desc: '读书、随笔与自我观察，文字很耐读。', url: 'https://example.com', tags: ['读书'], cat: 'read' },
+  { name: 'Mono', desc: '独立开发者的产品日志与踩坑记录。', url: 'https://example.com', tags: ['独立开发'], cat: 'tech' },
+  { name: '风与晨辉', desc: '摄影与旅行，照片拍得很好看。', url: 'https://example.com', tags: ['摄影', '旅行'], cat: 'photo' },
+  { name: 'CodePine', desc: '后端与架构，写得很系统。', url: 'https://example.com', tags: ['后端'], cat: 'tech' },
+  { name: '星野', desc: '二次元与日常，轻松有趣。', url: 'https://example.com', tags: ['日常'], cat: 'life' },
+  { name: '山雾', desc: '数据库与分布式笔记，更新很稳定。', url: 'https://example.com', tags: ['后端', '数据库'], cat: 'tech' },
+  { name: '四季邮局', desc: '写给生活的信，四季更迭都有记录。', url: 'https://example.com', tags: ['随笔'], cat: 'life' },
+  { name: '书页与岛', desc: '书评与阅读方法，每月一份书单。', url: 'https://example.com', tags: ['读书', '书评'], cat: 'read' },
+  { name: '快门之间', desc: '街头摄影集，光影很有味道。', url: 'https://example.com', tags: ['摄影'], cat: 'photo' },
+];
+
+const CATS = [
+  { id: 'all', label: '全部' },
+  { id: 'tech', label: '技术' },
+  { id: 'life', label: '生活' },
+  { id: 'read', label: '读书' },
+  { id: 'photo', label: '摄影' },
+];
+
+const catCount = (id: string) => (id === 'all' ? links.length : links.filter((l) => l.cat === id).length);
+
+const lost = [
+  { name: '北岛来信', desc: '以前常交换随笔的邻居，好久没打开了。', since: '2025.08' },
+  { name: '像素杂货铺', desc: '域名过期了，希望主人一切顺利。', since: '2025.11' },
+];
+
+const mySite = [
+  { label: '名称', value: '无需多言 Blog' },
+  { label: '链接', value: 'https://wxyd.example.com' },
+  { label: '描述', value: '穷则独善其身，达则兼普天下' },
+];
+
+const infoText = mySite.map((it) => `${it.label}：${it.value}`).join('\n');
+---
+
+<BaseLayout title="友链 · 无需多言 Blog" description="无需多言 Blog 的朋友们。">
+  <Navbar />
+
+  <main class="container">
+    <PageHeader title="友链" subtitle="互联网上的邻居们，常去逛逛。" />
+
+    <div class="card link-toolbar">
+      <div class="link-tabs">
+        {
+          CATS.map((c, i) => (
+            <button class:list={['link-tab', { active: i === 0 }]} type="button" data-cat={c.id}>
+              {c.label}
+              <i>{catCount(c.id)}</i>
+            </button>
+          ))
+        }
+      </div>
+      <div class="link-tools-right">
+        <span class="link-total">共 <strong>{links.length}</strong> 位邻居</span>
+        <button class="link-random" id="linkRandom" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"></path>
+          </svg>
+          随机串门
+        </button>
+      </div>
+    </div>
+
+    <div class="link-grid" id="linkGrid">
+      {
+        links.map((l) => (
+          <a class="card link-card" href={l.url} target="_blank" rel="noopener" data-cat={l.cat}>
+            <span class="link-avatar" style={`background:${avatarGrad(l.name)}`}>
+              <i>{l.name.slice(0, 1)}</i>
+            </span>
+            <span class="link-main">
+              <strong class="link-name">{l.name}</strong>
+              <span class="link-desc">{l.desc}</span>
+              <span class="link-tags">
+                {l.tags.map((t) => <em>{t}</em>)}
+              </span>
+            </span>
+            <svg class="link-arrow" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7 17 17 7M9 7h8v8" />
+            </svg>
+          </a>
+        ))
+      }
+    </div>
+
+    <section class="card apply-card">
+      <div class="apply-col">
+        <h2 class="apply-title">申请友链</h2>
+        <ol class="apply-steps">
+          <li><span class="step-num">1</span>在留言墙或邮件里留下你的站点信息</li>
+          <li><span class="step-num">2</span>我会去你的站点逛逛，确认互链</li>
+          <li><span class="step-num">3</span>24 小时内上链，成为邻居</li>
+        </ol>
+        <ul class="apply-list">
+          <li>站点有持续更新的原创内容，不只是转载。</li>
+          <li>能正常访问，访问体验干净（无强制弹窗、无大量广告）。</li>
+          <li>希望彼此互链，把对方放在显眼一点的位置。</li>
+        </ul>
+      </div>
+
+      <div class="apply-col apply-col-mine">
+        <h2 class="apply-title">我的信息</h2>
+        <ul class="apply-info">
+          {
+            mySite.map((it) => (
+              <li>
+                <span class="apply-label">{it.label}</span>
+                <span class="apply-value">{it.value}</span>
+              </li>
+            ))
+          }
+        </ul>
+        <div class="apply-btns">
+          <button class="apply-btn" id="copyInfo" type="button" data-text={infoText}>
+            复制我的信息
+          </button>
+          <a class="apply-btn apply-ghost" href="/message">去留言墙申请</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="lost-section">
+      <h2 class="lost-title">暂时失联的邻居</h2>
+      <div class="lost-grid">
+        {
+          lost.map((l) => (
+            <div class="card lost-card">
+              <span class="lost-badge">失联</span>
+              <strong>{l.name}</strong>
+              <p>{l.desc}</p>
+              <span class="lost-since">标记于 {l.since}</span>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+
+  <FloatingWidgets />
+</BaseLayout>
+
+<style>
+  .link-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 12px 14px;
+    margin-bottom: 22px;
+  }
+
+  .link-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .link-tab {
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: var(--card-soft);
+    border: 1px solid var(--border);
+    color: var(--text-2);
+    font-size: 13px;
+    font-weight: 600;
+    transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .link-tab i {
+    margin-left: 4px;
+    color: var(--text-3);
+    font-size: 11px;
+    font-style: normal;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .link-tab:hover {
+    color: var(--accent-strong);
+    border-color: rgba(246, 161, 28, 0.45);
+  }
+
+  .link-tab.active {
+    background: var(--accent-strong);
+    border-color: var(--accent-strong);
+    color: #fff;
+  }
+
+  .link-tab.active i {
+    color: rgba(255, 255, 255, 0.75);
+  }
+
+  .link-tools-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .link-total {
+    color: var(--text-3);
+    font-size: 12.5px;
+  }
+
+  .link-total strong {
+    color: var(--accent-strong);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .link-random {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: var(--accent-strong);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    transition: filter 0.2s ease, transform 0.2s ease;
+  }
+
+  .link-random:hover {
+    filter: brightness(1.06);
+    transform: translateY(-1px);
+  }
+
+  .link-random svg {
+    width: 15px;
+    height: 15px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* ---------- 友链卡片 ---------- */
+
+  .link-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 18px;
+    margin-bottom: 26px;
+  }
+
+  .link-card {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 20px;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  }
+
+  .link-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow);
+    border-color: rgba(246, 161, 28, 0.4);
+  }
+
+  .link-avatar {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 13px;
+    color: #fff;
+  }
+
+  .link-avatar i {
+    font-size: 19px;
+    font-style: normal;
+    font-weight: 700;
+  }
+
+  .link-main {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .link-name {
+    color: var(--text-1);
+    font-size: 15.5px;
+    font-weight: 700;
+  }
+
+  .link-desc {
+    color: var(--text-2);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .link-tags {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 2px;
+  }
+
+  .link-tags em {
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+    font-size: 11px;
+    font-style: normal;
+  }
+
+  .link-arrow {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: var(--text-3);
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: stroke 0.2s ease, transform 0.2s ease;
+  }
+
+  .link-card:hover .link-arrow {
+    stroke: var(--accent-strong);
+    transform: translate(2px, -2px);
+  }
+
+  /* ---------- 申请区 ---------- */
+
+  .apply-card {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 32px;
+    padding: 28px 30px;
+  }
+
+  .apply-title {
+    margin: 0 0 14px;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-1);
+  }
+
+  .apply-steps {
+    list-style: none;
+    margin: 0 0 18px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .apply-steps li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-2);
+    font-size: 13.5px;
+  }
+
+  .step-num {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .apply-list {
+    margin: 0;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+
+  .apply-list li {
+    color: var(--text-2);
+    font-size: 13.5px;
+    line-height: 1.75;
+  }
+
+  .apply-col-mine {
+    padding-left: 32px;
+    border-left: 1px dashed var(--border);
+  }
+
+  .apply-info {
+    list-style: none;
+    margin: 0 0 18px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .apply-info li {
+    display: flex;
+    gap: 10px;
+    font-size: 13.5px;
+  }
+
+  .apply-label {
+    flex: none;
+    width: 44px;
+    color: var(--text-3);
+  }
+
+  .apply-value {
+    color: var(--text-1);
+    word-break: break-all;
+  }
+
+  .apply-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .apply-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 9px 18px;
+    border-radius: 999px;
+    background: var(--accent-strong);
+    color: #fff;
+    font-size: 13.5px;
+    font-weight: 600;
+    transition: filter 0.2s ease, transform 0.2s ease, background 0.2s ease;
+  }
+
+  .apply-btn:hover {
+    filter: brightness(1.06);
+    transform: translateY(-1px);
+  }
+
+  .apply-btn.copied {
+    background: #4fbf91;
+  }
+
+  .apply-ghost {
+    background: transparent;
+    border: 1px solid rgba(232, 137, 11, 0.5);
+    color: var(--accent-strong);
+  }
+
+  .apply-ghost:hover {
+    background: var(--accent-soft);
+    filter: none;
+  }
+
+  /* ---------- 失联区 ---------- */
+
+  .lost-section {
+    margin-top: 30px;
+  }
+
+  .lost-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 14px;
+    color: var(--text-2);
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .lost-title::before {
+    content: '';
+    width: 4px;
+    height: 14px;
+    border-radius: 2px;
+    background: var(--text-3);
+  }
+
+  .lost-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+  }
+
+  .lost-card {
+    position: relative;
+    padding: 18px 20px;
+    opacity: 0.72;
+  }
+
+  .lost-badge {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: var(--card-soft);
+    border: 1px dashed var(--border);
+    color: var(--text-3);
+    font-size: 11px;
+  }
+
+  .lost-card strong {
+    color: var(--text-2);
+    font-size: 14.5px;
+  }
+
+  .lost-card p {
+    margin: 6px 0 10px;
+    color: var(--text-3);
+    font-size: 12.5px;
+    line-height: 1.7;
+  }
+
+  .lost-since {
+    color: var(--text-3);
+    font-size: 11.5px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- 响应式 ---------- */
+
+  @media (max-width: 780px) {
+    .link-toolbar {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .link-tools-right {
+      justify-content: space-between;
+    }
+
+    .apply-card {
+      grid-template-columns: 1fr;
+      gap: 24px;
+      padding: 22px 20px;
+    }
+
+    .apply-col-mine {
+      padding-left: 0;
+      padding-top: 22px;
+      border-left: none;
+      border-top: 1px dashed var(--border);
+    }
+  }
+</style>
+
+<script>
+  const tabs = [...document.querySelectorAll('.link-tab')] as HTMLElement[];
+  const cards = [...document.querySelectorAll('.link-card')] as HTMLElement[];
+
+  tabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      tabs.forEach((t) => t.classList.toggle('active', t === tab));
+      const cat = tab.dataset.cat || 'all';
+      cards.forEach((c) => {
+        c.style.display = cat === 'all' || c.dataset.cat === cat ? '' : 'none';
+      });
+    });
+  });
+
+  // 随机串门：从当前可见的邻居里随机挑一个
+  document.getElementById('linkRandom')?.addEventListener('click', () => {
+    const visible = cards.filter((c) => c.style.display !== 'none');
+    const pool = visible.length ? visible : cards;
+    const pick = pool[Math.floor(Math.random() * pool.length)];
+    const url = pick?.getAttribute('href');
+    if (url) window.open(url, '_blank', 'noopener');
+  });
+
+  // 一键复制我的站点信息
+  const copyBtn = document.getElementById('copyInfo');
+  copyBtn?.addEventListener('click', async () => {
+    const text = copyBtn.getAttribute('data-text') || '';
+    let ok = true;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      ok = false;
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+        ok = true;
+      } catch {
+        /* 剪贴板不可用时仅提示失败 */
+      }
+    }
+    copyBtn.textContent = ok ? '已复制 ✓' : '复制失败';
+    copyBtn.classList.toggle('copied', ok);
+    setTimeout(() => {
+      copyBtn.textContent = '复制我的信息';
+      copyBtn.classList.remove('copied');
+    }, 1800);
+  });
+</script>

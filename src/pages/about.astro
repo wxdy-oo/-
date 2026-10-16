@@ -1,0 +1,334 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+import FloatingWidgets from '../components/FloatingWidgets.astro';
+
+const research = [
+  { title: '大语言模型与智能体系统', desc: '关注 Multi-Agent 协作、工具调用、任务规划、自我反思与长期记忆机制。' },
+  { title: '模型评估与数据工程', desc: '关注 LLM-as-a-Judge、Benchmark 构建、数据蒸馏与面向模型改进的数据闭环。' },
+  { title: 'LLM Post-Training', desc: '探索后训练技术如 RL、Agent RL，如何训练出一个更加强大的模型。' },
+];
+
+const hobbies = [
+  { title: '游泳', desc: '蛙泳已经游得比较稳，正在努力解锁自由泳～' },
+  { title: '羽毛球', desc: '初级水平，主打一个开心。' },
+  { title: '台球', desc: '最近比较上头的一项，水平仍在稳定地菜。' },
+  { title: '音乐', desc: '十一年霉粉，同时也是 R&B 爱好者。' },
+];
+
+const timeline = [
+  { date: '2026.07', text: '博客上线，开始认真记录学习与生活。' },
+  { date: '2026.06', text: '整理并发布了 NapMem 的论文阅读笔记。' },
+  { date: '2026.05', text: '学自由泳，进度缓慢但有点上瘾。' },
+  { date: '2026.04', text: '重拾台球，找回了一点手感。' },
+];
+---
+
+<BaseLayout
+  title="关于 · 无需多言 Blog"
+  description="认识一下无需多言：一个正在读研、热爱技术与生活的人。"
+>
+  <Navbar />
+
+  <main class="container about-page">
+    <section class="about-hero">
+      <img src="/images/about-banner.jpg" alt="黄昏城市天际线插画" />
+    </section>
+
+    <div class="about-tabs" role="tablist" aria-label="关于页面切换">
+      <button class="about-tab active" data-tab="me" role="tab" aria-selected="true">关于我</button>
+      <button class="about-tab" data-tab="log" role="tab" aria-selected="false">动态日志</button>
+    </div>
+
+    <article class="card about-card" data-panel="me">
+      <h1 class="about-title">Hello World, I'm 无需多言.</h1>
+
+      <p class="about-p">
+        我是一名浙江大学在读硕士研究生，在此之前，我在大连理工大学获得了本科学位。平时的我，
+        一半时间泡在实验室读论文、跑实验，另一半用来运动、听歌和发呆。
+      </p>
+      <p class="about-p">
+        这里没有宏大叙事，只有一个人认真生活、慢慢变好的记录。至于人品，我可以打个包票——还算是个不错的人。
+      </p>
+
+      <h2 class="about-h2">关于这个博客</h2>
+      <p class="about-p">
+        这个博客里会记录我在 LLM、Agent、工程开发与科研阅读中的学习轨迹，也会放下一些与生活、成长和自我观察有关的文字。
+      </p>
+      <p class="about-p">
+        我希望它不只是一台技术笔记仓库，而是一面缓慢生长的镜子：记录我如何理解技术，如何面对问题，
+        也如何在持续学习中塑造自己的判断力。
+      </p>
+
+      <h2 class="about-h2">研究兴趣</h2>
+      <ul class="about-list">
+        {
+          research.map((r) => (
+            <li>
+              <strong>{r.title}</strong>：{r.desc}
+            </li>
+          ))
+        }
+      </ul>
+
+      <h2 class="about-h2">兴趣爱好</h2>
+      <ul class="about-list">
+        {
+          hobbies.map((h) => (
+            <li>
+              <strong>{h.title}</strong>：{h.desc}
+            </li>
+          ))
+        }
+      </ul>
+
+      <h2 class="about-h2">联系我</h2>
+      <p class="about-p">如果你对我的博客内容、项目经历或研究方向感兴趣，欢迎与我交流。</p>
+      <div class="about-contact">
+        <a class="about-link" href="mailto:hi@wxyd.example.com">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="3" y="5" width="18" height="14" rx="2.5"></rect>
+            <path d="m4 7 8 6 8-6"></path>
+          </svg>
+          hi@wxyd.example.com
+        </a>
+        <a class="about-link" href="https://github.com" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2.6a9.4 9.4 0 0 0-3 18.3c.5.1.6-.2.6-.4v-1.6c-2.6.6-3.2-1.2-3.2-1.2-.4-1.1-1-1.4-1-1.4-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.8 0-.7.3-1.1.6-1.4-2-.2-4.2-1-4.2-4.5 0-1 .3-1.8 1-2.4-.1-.2-.4-1.1.1-2.4 0 0 .8-.2 2.5 1a8.7 8.7 0 0 1 4.6 0c1.7-1.2 2.5-1 2.5-1 .5 1.3.2 2.2.1 2.4.6.6 1 1.4 1 2.4 0 3.5-2.2 4.3-4.2 4.5.3.3.6.9.6 1.8v2.7c0 .2.1.5.6.4A9.4 9.4 0 0 0 12 2.6Z"></path>
+          </svg>
+          GitHub
+        </a>
+      </div>
+    </article>
+
+    <article class="card about-card" data-panel="log" hidden>
+      <h1 class="about-title">动态日志</h1>
+      <p class="about-p">这里记录一些零碎的近况，写给自己，也写给偶尔路过的你。</p>
+      <ul class="about-timeline">
+        {
+          timeline.map((t) => (
+            <li>
+              <span class="tl-date">{t.date}</span>
+              <span class="tl-text">{t.text}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </article>
+  </main>
+
+  <Footer />
+
+  <FloatingWidgets />
+</BaseLayout>
+
+<style>
+  .about-page {
+    /* 顶栏是绝对定位的，这里留出与顶栏的间距 */
+    padding-top: 92px;
+  }
+
+  .about-hero {
+    max-width: 760px;
+    margin: 0 auto;
+    aspect-ratio: 16 / 5;
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+
+  .about-hero img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .about-tabs {
+    display: flex;
+    gap: 10px;
+    max-width: 760px;
+    margin: 18px auto 0;
+  }
+
+  .about-tab {
+    padding: 7px 18px;
+    border-radius: 999px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text-2);
+    font-size: 14px;
+    font-weight: 600;
+    transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+  }
+
+  .about-tab:hover {
+    color: var(--accent-strong);
+    border-color: rgba(246, 161, 28, 0.5);
+  }
+
+  .about-tab.active {
+    background: var(--accent-strong);
+    border-color: var(--accent-strong);
+    color: #fff;
+  }
+
+  .about-card {
+    max-width: 760px;
+    margin: 22px auto 0;
+    padding: 40px 44px;
+  }
+
+  .about-card[hidden] {
+    display: none;
+  }
+
+  .about-title {
+    margin: 0 0 22px;
+    font-family: var(--font-serif);
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--text-1);
+  }
+
+  .about-h2 {
+    margin: 34px 0 12px;
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--text-1);
+  }
+
+  .about-p {
+    margin: 0 0 14px;
+    color: var(--text-2);
+    font-size: 15px;
+    line-height: 1.9;
+  }
+
+  .about-list {
+    margin: 0;
+    padding-left: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .about-list li {
+    color: var(--text-2);
+    font-size: 15px;
+    line-height: 1.85;
+  }
+
+  .about-list li strong {
+    color: var(--text-1);
+    font-weight: 600;
+  }
+
+  .about-contact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 6px;
+  }
+
+  .about-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 15px;
+    border-radius: 999px;
+    background: var(--card-soft);
+    border: 1px solid var(--border);
+    color: var(--text-1);
+    font-size: 14px;
+    transition: color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .about-link:hover {
+    color: var(--accent-strong);
+    border-color: rgba(246, 161, 28, 0.5);
+  }
+
+  .about-link svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .about-timeline {
+    position: relative;
+    margin: 20px 0 0;
+    padding: 0 0 0 22px;
+    list-style: none;
+    border-left: 1px dashed var(--border);
+  }
+
+  .about-timeline li {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding-bottom: 20px;
+  }
+
+  .about-timeline li::before {
+    content: '';
+    position: absolute;
+    left: -27px;
+    top: 7px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--accent-strong);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+
+  .tl-date {
+    color: var(--text-3);
+    font-size: 12.5px;
+    letter-spacing: 0.4px;
+  }
+
+  .tl-text {
+    color: var(--text-2);
+    font-size: 15px;
+    line-height: 1.8;
+  }
+
+  @media (max-width: 640px) {
+    .about-page {
+      padding-top: 84px;
+    }
+
+    .about-card {
+      padding: 28px 22px;
+    }
+
+    .about-title {
+      font-size: 24px;
+    }
+  }
+</style>
+
+<script>
+  const tabs = document.querySelectorAll<HTMLElement>('.about-tab');
+  const panels = document.querySelectorAll<HTMLElement>('.about-card');
+
+  tabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      const key = tab.dataset.tab;
+      tabs.forEach((t) => {
+        const on = t === tab;
+        t.classList.toggle('active', on);
+        t.setAttribute('aria-selected', String(on));
+      });
+      panels.forEach((p) => {
+        p.hidden = p.dataset.panel !== key;
+      });
+    });
+  });
+</script>

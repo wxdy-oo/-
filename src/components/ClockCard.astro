@@ -1,0 +1,79 @@
+---
+const WEEK = ['日', '一', '二', '三', '四', '五', '六'];
+---
+
+<section class="card clock-card">
+  <div class="clock" role="timer" aria-live="off">
+    <span class="clock-num" id="clockH">--</span>
+    <span class="clock-sep">:</span>
+    <span class="clock-num" id="clockM">--</span>
+    <span class="clock-sep">:</span>
+    <span class="clock-num" id="clockS">--</span>
+  </div>
+  <p class="clock-date" id="clockDate">正在获取当前时间…</p>
+</section>
+
+<style>
+  .clock-card {
+    padding: 26px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .clock {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    color: var(--text-1);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    font-size: 46px;
+    line-height: 1;
+    letter-spacing: 1px;
+  }
+
+  .clock-sep {
+    margin: 0 4px;
+    color: var(--text-3);
+    font-weight: 600;
+  }
+
+  .clock-date {
+    margin: 14px 0 0;
+    color: var(--text-2);
+    font-size: 13px;
+  }
+
+  @media (max-width: 640px) {
+    .clock {
+      font-size: 38px;
+    }
+  }
+</style>
+
+<script>
+  const WEEK = ['日', '一', '二', '三', '四', '五', '六'];
+  const h = document.getElementById('clockH');
+  const m = document.getElementById('clockM');
+  const s = document.getElementById('clockS');
+  const dateEl = document.getElementById('clockDate');
+
+  function pad(n: number) {
+    return String(n).padStart(2, '0');
+  }
+
+  function tick() {
+    const d = new Date();
+    if (h) h.textContent = pad(d.getHours());
+    if (m) m.textContent = pad(d.getMinutes());
+    if (s) s.textContent = pad(d.getSeconds());
+    if (dateEl) {
+      dateEl.textContent = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 星期${WEEK[d.getDay()]}`;
+    }
+  }
+
+  tick();
+  setInterval(tick, 1000);
+</script>

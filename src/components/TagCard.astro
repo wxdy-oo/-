@@ -1,0 +1,83 @@
+---
+const tags = [
+  { name: 'Agent Memory', count: 6 },
+  { name: 'RL', count: 5 },
+  { name: 'LLM', count: 9 },
+  { name: 'Knowledge Graph', count: 3 },
+  { name: 'Python', count: 7 },
+  { name: 'Astro', count: 2 },
+  { name: '论文笔记', count: 8 },
+  { name: '效率', count: 4 },
+  { name: 'Podcast', count: 2 },
+  { name: '前端', count: 5 },
+];
+---
+
+<section class="card tag-card">
+  <h2 class="card-title">标签云</h2>
+
+  <div class="tag-cloud">
+    {
+      tags.map((t) => (
+        <a
+          class="tag-chip"
+          href={`/tags/${t.name}`}
+          style={`font-size:${12 + Math.min(Math.max(t.count, 1), 9) * 0.62}px`}
+        >
+          {t.name}
+          <span class="count">{t.count}</span>
+        </a>
+      ))
+    }
+  </div>
+</section>
+
+<style>
+  .tag-card {
+    padding: 22px 20px;
+  }
+
+  .card-title {
+    margin: 0 0 14px;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-1);
+  }
+
+  .tag-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+  }
+
+  .tag-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 11px;
+    border-radius: 999px;
+    background: var(--card-soft);
+    border: 1px solid var(--border);
+    color: var(--text-2);
+    font-weight: 600;
+    line-height: 1.4;
+    transition: color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  }
+
+  .tag-chip:hover {
+    color: var(--accent-strong);
+    border-color: rgba(246, 161, 28, 0.5);
+    transform: translateY(-2px);
+  }
+
+  .tag-chip .count {
+    color: var(--text-3);
+    font-size: 11px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tag-chip:hover .count {
+    color: var(--accent-strong);
+  }
+</style>

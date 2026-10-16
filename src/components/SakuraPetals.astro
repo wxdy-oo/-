@@ -1,0 +1,97 @@
+---
+// 樱花飘落：纯 CSS 动画，构建时用伪随机生成每片花瓣的参数，运行时零 JS。
+// 放在 BaseLayout 中，全站所有页面自动生效。
+
+let seed = 20260314;
+const rand = () => {
+  seed = (seed * 1103515245 + 12345) % 2147483648;
+  return seed / 2147483648;
+};
+
+const petals = Array.from({ length: 16 }, () => ({
+  left: (rand() * 100).toFixed(2),
+  size: (7 + rand() * 9).toFixed(1),
+  fall: (22 + rand() * 18).toFixed(2),
+  delay: (rand() * 18).toFixed(2),
+  sway: (6 + rand() * 5).toFixed(2),
+  drift: (-50 + rand() * 100).toFixed(0),
+  opacity: (0.4 + rand() * 0.45).toFixed(2),
+}));
+---
+
+<div class="sakura" aria-hidden="true">
+  {
+    petals.map((p) => (
+      <span
+        class="sakura-petal"
+        style={`left:${p.left}%;--size:${p.size}px;--fall:${p.fall}s;--delay:${p.delay}s;--sway:${p.sway}s;--drift:${p.drift}px;--op:${p.opacity}`}
+      >
+        <i class="sakura-leaf"></i>
+      </span>
+    ))
+  }
+</div>
+
+<style>
+  .sakura {
+    position: fixed;
+    inset: 0;
+    z-index: 12;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .sakura-petal {
+    position: absolute;
+    top: -8vh;
+    animation: sakura-fall var(--fall) linear var(--delay) infinite;
+    will-change: transform;
+  }
+
+  @keyframes sakura-fall {
+    0% {
+      transform: translate3d(0, -8vh, 0);
+    }
+    100% {
+      transform: translate3d(var(--drift), 116vh, 0);
+    }
+  }
+
+  .sakura-leaf {
+    display: block;
+    width: var(--size);
+    height: var(--size);
+    border-radius: 100% 0 100% 0;
+    background: linear-gradient(135deg, #ffe2ee, #f6a6c2);
+    opacity: var(--op);
+    animation: sakura-sway var(--sway) ease-in-out var(--delay) infinite alternate;
+  }
+
+  @keyframes sakura-sway {
+    from {
+      transform: translateX(-8px) rotate(-16deg);
+    }
+    to {
+      transform: translateX(8px) rotate(122deg);
+    }
+  }
+
+  :global([data-theme='dark']) .sakura-leaf {
+    background: linear-gradient(135deg, #cf8fae, #a95c84);
+    opacity: calc(var(--op) * 0.78);
+  }
+
+  /* 小屏减少花瓣数量，避免拥挤 */
+  @media (max-width: 640px) {
+    .sakura-petal:nth-child(n + 11) {
+      display: none;
+    }
+  }
+
+  /* 尊重「减少动画」偏好 */
+  @media (prefers-reduced-motion: reduce) {
+    .sakura {
+      display: none;
+    }
+  }
+</style>

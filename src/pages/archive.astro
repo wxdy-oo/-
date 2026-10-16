@@ -1,0 +1,704 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Navbar from '../components/Navbar.astro';
+import PageHeader from '../components/PageHeader.astro';
+import Footer from '../components/Footer.astro';
+import FloatingWidgets from '../components/FloatingWidgets.astro';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('blog'))
+  .sort((a, b) => b.data.date.localeCompare(a.data.date))
+  .map((p) => ({
+    slug: p.id,
+    date: p.data.date,
+    title: p.data.title,
+    tags: p.data.tags,
+    views: p.data.views,
+    words: p.data.words,
+  }));
+
+const yearOf = (d: string) => d.slice(0, 4);
+const years = [...new Set(posts.map((p) => yearOf(p.date)))].sort((a, b) => b.localeCompare(a));
+const groups = years.map((y) => ({ year: y, items: posts.filter((p) => yearOf(p.date) === y) }));
+
+const tagMap = new Map<string, number>();
+posts.forEach((p) => p.tags.forEach((t) => tagMap.set(t, (tagMap.get(t) || 0) + 1)));
+const allTags = [...tagMap.entries()].sort((a, b) => b[1] - a[1]);
+
+const totalViews = posts.reduce((s, p) => s + p.views, 0);
+const totalWords = posts.reduce((s, p) => s + p.words, 0);
+const birth = new Date('2024-10-16T00:00:00+08:00');
+const siteDays = Math.max(1, Math.floor((Date.now() - birth.getTime()) / 86400000));
+
+const yearChart = [...years].reverse().map((y) => ({
+  year: y,
+  count: groups.find((g) => g.year === y)!.items.length,
+}));
+const maxYearCount = Math.max(...yearChart.map((y) => y.count));
+
+const hot = [...posts].sort((a, b) => b.views - a.views).slice(0, 5);
+---
+
+<BaseLayout title="归档 · 无需多言 Blog" description="按时间浏览无需多言的全部文章。">
+  <Navbar />
+
+  <main class="container">
+    <PageHeader title="归档" subtitle="按时间倒序排列的全部文章。慢慢写，慢慢攒。" />
+
+    <div class="arch-stats">
+      <div class="arch-stat">
+        <strong data-count={posts.length}>0</strong>
+        <span>篇文章</span>
+      </div>
+      <div class="arch-stat">
+        <strong data-count={allTags.length}>0</strong>
+        <span>个标签</span>
+      </div>
+      <div class="arch-stat">
+        <strong data-count={totalViews}>0</strong>
+        <span>总浏览</span>
+      </div>
+      <div class="arch-stat">
+        <strong data-count={siteDays}>0</strong>
+        <span>天·笔耕不辍</span>
+      </div>
+    </div>
+
+    <div class="arch-layout">
+      <div class="arch-main">
+        <div class="card arch-tools">
+          <div class="arch-search">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="11" cy="11" r="7"></circle>
+              <path d="m20 20-3.8-3.8"></path>
+            </svg>
+            <input id="archSearch" type="search" placeholder="搜索文章标题…" aria-label="搜索文章标题" />
+          </div>
+          <div class="arch-chips">
+            {
+              allTags.map(([t, n]) => (
+                <button class="arch-chip" type="button" data-tag={t}>
+                  {t}
+                  <i>{n}</i>
+                </button>
+              ))
+            }
+          </div>
+          <p class="arch-result">
+            共 <strong id="archCount">{posts.length}</strong> 篇符合条件
+          </p>
+        </div>
+
+        <div class="arch-years">
+          {
+            groups.map((g) => (
+              <section class="arch-year">
+                <h2 class="arch-year-title">
+                  <span class="arch-year-num">{g.year}</span>
+                  <span class="arch-year-count">{g.items.length} 篇</span>
+                </h2>
+
+                <ul class="arch-list">
+                  {g.items.map((p) => (
+                    <li class="arch-item" data-title={p.title} data-tags={p.tags.join('|')}>
+                      <span class="arch-date">{p.date.slice(5)}</span>
+                      <a class="arch-link" href={`/blog/${p.slug}`}>{p.title}</a>
+                      <span class="arch-tags">
+                        {p.tags.map((t) => <em>{t}</em>)}
+                      </span>
+                      <span class="arch-views">{p.views} 次浏览</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))
+          }
+        </div>
+
+        <div class="card arch-empty" id="archEmpty" hidden>
+          <p>没有找到相关文章，换个关键词或标签试试。</p>
+          <button id="archReset" type="button">清除筛选</button>
+        </div>
+      </div>
+
+      <aside class="arch-side">
+        <section class="card side-card">
+          <h2 class="side-title">年度产出</h2>
+          <div class="chart-bars">
+            {
+              yearChart.map((y) => (
+                <div class="chart-col">
+                  <span class="chart-num">{y.count}</span>
+                  <span
+                    class="chart-bar"
+                    style={`height:${Math.max(8, Math.round((y.count / maxYearCount) * 100))}%`}
+                  />
+                  <span class="chart-year">{y.year}</span>
+                </div>
+              ))
+            }
+          </div>
+          <p class="chart-foot">
+            累计写作约 <strong>{(totalWords / 10000).toFixed(1)}</strong> 万字
+          </p>
+        </section>
+
+        <section class="card side-card">
+          <h2 class="side-title">热门文章</h2>
+          <ol class="hot-list">
+            {
+              hot.map((p, i) => (
+                <li class="hot-item">
+                  <span class={`hot-rank rank-${i + 1}`}>{i + 1}</span>
+                  <span class="hot-title" title={p.title}>
+                    {p.title}
+                  </span>
+                  <span class="hot-views">{p.views}</span>
+                </li>
+              ))
+            }
+          </ol>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <Footer />
+
+  <FloatingWidgets />
+</BaseLayout>
+
+<style>
+  .arch-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 26px;
+  }
+
+  .arch-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 18px 20px;
+    border-radius: var(--radius-sm);
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .arch-stat strong {
+    color: var(--text-1);
+    font-size: 24px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .arch-stat span {
+    color: var(--text-3);
+    font-size: 12.5px;
+  }
+
+  .arch-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 26px;
+    align-items: start;
+  }
+
+  /* ---------- 工具栏 ---------- */
+
+  .arch-tools {
+    padding: 18px 20px;
+    margin-bottom: 28px;
+  }
+
+  .arch-search {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 13px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--card-soft);
+    margin-bottom: 14px;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .arch-search:focus-within {
+    border-color: rgba(246, 161, 28, 0.6);
+    background: var(--card);
+  }
+
+  .arch-search svg {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: var(--text-3);
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+
+  .arch-search input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: none;
+    outline: none;
+    color: var(--text-1);
+    font-size: 14px;
+  }
+
+  .arch-search input::placeholder {
+    color: var(--text-3);
+  }
+
+  .arch-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .arch-chip {
+    padding: 4px 11px;
+    border-radius: 999px;
+    background: var(--card-soft);
+    border: 1px solid var(--border);
+    color: var(--text-2);
+    font-size: 12.5px;
+    font-weight: 600;
+    transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .arch-chip i {
+    margin-left: 4px;
+    color: var(--text-3);
+    font-size: 11px;
+    font-style: normal;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .arch-chip:hover {
+    color: var(--accent-strong);
+    border-color: rgba(246, 161, 28, 0.5);
+  }
+
+  .arch-chip.active {
+    background: var(--accent-strong);
+    border-color: var(--accent-strong);
+    color: #fff;
+  }
+
+  .arch-chip.active i {
+    color: rgba(255, 255, 255, 0.75);
+  }
+
+  .arch-result {
+    margin: 12px 0 0;
+    color: var(--text-3);
+    font-size: 12.5px;
+  }
+
+  .arch-result strong {
+    color: var(--accent-strong);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- 时间线 ---------- */
+
+  .arch-years {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+  }
+
+  .arch-year-title {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin: 0 0 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed var(--border);
+  }
+
+  .arch-year-num {
+    font-family: var(--font-serif);
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text-1);
+  }
+
+  .arch-year-count {
+    color: var(--text-3);
+    font-size: 12.5px;
+  }
+
+  .arch-list {
+    list-style: none;
+    margin: 0 0 0 6px;
+    padding: 0 0 0 18px;
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .arch-item {
+    position: relative;
+    display: grid;
+    grid-template-columns: 62px 1fr auto 92px;
+    align-items: center;
+    gap: 14px;
+    padding: 11px 14px;
+    border-radius: 10px;
+    transition: background 0.2s ease, transform 0.2s ease;
+  }
+
+  .arch-item::before {
+    content: '';
+    position: absolute;
+    left: -22px;
+    top: 50%;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+    transform: translateY(-50%);
+    transition: transform 0.2s ease;
+  }
+
+  .arch-item:hover {
+    background: var(--card);
+    transform: translateX(4px);
+  }
+
+  .arch-item:hover::before {
+    transform: translateY(-50%) scale(1.35);
+  }
+
+  .arch-date {
+    color: var(--text-3);
+    font-size: 12.5px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.3px;
+  }
+
+  .arch-link {
+    color: var(--text-1);
+    font-size: 15px;
+    transition: color 0.2s ease;
+  }
+
+  .arch-item:hover .arch-link {
+    color: var(--accent-strong);
+  }
+
+  .arch-tags {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .arch-tags em {
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+    font-size: 11px;
+    font-style: normal;
+    white-space: nowrap;
+  }
+
+  .arch-views {
+    color: var(--text-3);
+    font-size: 12px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .arch-empty {
+    padding: 44px 20px;
+    text-align: center;
+  }
+
+  .arch-empty p {
+    margin: 0 0 16px;
+    color: var(--text-2);
+    font-size: 14px;
+  }
+
+  .arch-empty button {
+    padding: 8px 20px;
+    border-radius: 999px;
+    border: 1px solid rgba(232, 137, 11, 0.5);
+    color: var(--accent-strong);
+    font-size: 13px;
+    font-weight: 600;
+    transition: background 0.2s ease;
+  }
+
+  .arch-empty button:hover {
+    background: var(--accent-soft);
+  }
+
+  /* ---------- 侧栏 ---------- */
+
+  .arch-side {
+    position: sticky;
+    top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .side-card {
+    padding: 20px;
+  }
+
+  .side-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 16px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-1);
+  }
+
+  .side-title::before {
+    content: '';
+    width: 4px;
+    height: 14px;
+    border-radius: 2px;
+    background: var(--accent);
+  }
+
+  .chart-bars {
+    display: flex;
+    align-items: stretch;
+    gap: 14px;
+    height: 150px;
+    padding: 0 4px;
+  }
+
+  .chart-col {
+    flex: 1;
+    display: grid;
+    grid-template-rows: 18px 1fr 18px;
+    justify-items: center;
+    gap: 4px;
+  }
+
+  .chart-num {
+    color: var(--text-2);
+    font-size: 12px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .chart-bar {
+    align-self: end;
+    width: 62%;
+    max-width: 40px;
+    min-height: 6px;
+    border-radius: 6px 6px 3px 3px;
+    background: linear-gradient(180deg, var(--accent), var(--accent-strong));
+    box-shadow: 0 -2px 10px -4px rgba(246, 161, 28, 0.55);
+  }
+
+  .chart-year {
+    color: var(--text-3);
+    font-size: 11.5px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .chart-foot {
+    margin: 14px 0 0;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border);
+    color: var(--text-3);
+    font-size: 12.5px;
+  }
+
+  .chart-foot strong {
+    color: var(--accent-strong);
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .hot-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .hot-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 9px;
+    transition: background 0.2s ease;
+  }
+
+  .hot-item:hover {
+    background: var(--card-soft);
+  }
+
+  .hot-rank {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    background: var(--card-soft);
+    color: var(--text-3);
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+
+  .hot-rank.rank-1 {
+    background: var(--accent-strong);
+    color: #fff;
+  }
+
+  .hot-rank.rank-2,
+  .hot-rank.rank-3 {
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+  }
+
+  .hot-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--text-2);
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .hot-views {
+    flex: none;
+    color: var(--text-3);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- 响应式 ---------- */
+
+  @media (max-width: 1040px) {
+    .arch-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .arch-side {
+      position: static;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      align-items: start;
+    }
+  }
+
+  @media (max-width: 780px) {
+    .arch-stats {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .arch-item {
+      grid-template-columns: 54px 1fr;
+      grid-template-areas:
+        'date title'
+        '.    meta';
+      row-gap: 6px;
+    }
+
+    .arch-date {
+      grid-area: date;
+    }
+
+    .arch-link {
+      grid-area: title;
+    }
+
+    .arch-tags {
+      grid-area: meta;
+    }
+
+    .arch-views {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  const searchInput = document.getElementById('archSearch') as HTMLInputElement | null;
+  const chips = [...document.querySelectorAll('.arch-chip')] as HTMLElement[];
+  const items = [...document.querySelectorAll('.arch-item')] as HTMLElement[];
+  const yearSections = [...document.querySelectorAll('.arch-year')] as HTMLElement[];
+  const countEl = document.getElementById('archCount');
+  const emptyEl = document.getElementById('archEmpty');
+  const resetBtn = document.getElementById('archReset');
+
+  function applyFilter() {
+    const q = (searchInput?.value || '').trim().toLowerCase();
+    const activeTag = document.querySelector('.arch-chip.active')?.getAttribute('data-tag') || '';
+    let visible = 0;
+
+    items.forEach((it) => {
+      const title = (it.getAttribute('data-title') || '').toLowerCase();
+      const tags = (it.getAttribute('data-tags') || '').split('|');
+      const ok = (!q || title.includes(q)) && (!activeTag || tags.includes(activeTag));
+      it.style.display = ok ? '' : 'none';
+      if (ok) visible++;
+    });
+
+    yearSections.forEach((sec) => {
+      const hasVisible = [...sec.querySelectorAll('.arch-item')].some(
+        (i) => (i as HTMLElement).style.display !== 'none'
+      );
+      sec.style.display = hasVisible ? '' : 'none';
+    });
+
+    if (countEl) countEl.textContent = String(visible);
+    if (emptyEl) emptyEl.hidden = visible > 0;
+  }
+
+  searchInput?.addEventListener('input', applyFilter);
+
+  chips.forEach((chip) =>
+    chip.addEventListener('click', () => {
+      const wasActive = chip.classList.contains('active');
+      chips.forEach((c) => c.classList.remove('active'));
+      if (!wasActive) chip.classList.add('active');
+      applyFilter();
+    })
+  );
+
+  resetBtn?.addEventListener('click', () => {
+    if (searchInput) searchInput.value = '';
+    chips.forEach((c) => c.classList.remove('active'));
+    applyFilter();
+    searchInput?.focus();
+  });
+
+  // 统计数字滚动动画
+  document.querySelectorAll('[data-count]').forEach((el) => {
+    const target = Number((el as HTMLElement).dataset.count || 0);
+    const duration = 900;
+    const t0 = performance.now();
+    const step = (t: number) => {
+      const p = Math.min(1, (t - t0) / duration);
+      el.textContent = String(Math.round(target * (1 - Math.pow(1 - p, 3))));
+      if (p < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  });
+</script>

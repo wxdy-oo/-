@@ -1,0 +1,231 @@
+---
+import { getCollection } from 'astro:content';
+
+const year = new Date().getFullYear();
+const postCount = (await getCollection('blog')).length;
+
+const quickLinks = [
+  { label: '首页', href: '/' },
+  { label: '归档', href: '/archive' },
+  { label: '照片墙', href: '/photos' },
+  { label: '说说', href: '/shuoshuo' },
+];
+
+const moreLinks = [
+  { label: '开源项目', href: '/projects' },
+  { label: '友链', href: '/links' },
+  { label: '留言墙', href: '/message' },
+  { label: '关于', href: '/about' },
+];
+
+const stats = [
+  { value: String(postCount), label: '文章' },
+  { value: '8', label: '说说' },
+  { value: '60', label: '照片' },
+];
+---
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a class="footer-logo" href="/">
+          <span>无需多言</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M12 1c.9 5.2 4.9 9.2 10.1 10.1C16.9 12.1 12.9 16.1 12 21.3 11.1 16.1 7.1 12.1 1.9 11.1 7.1 10.2 11.1 6.2 12 1z"
+              fill="currentColor"></path>
+          </svg>
+          <span>Blog</span>
+        </a>
+        <p class="footer-slogan">穷则独善其身，达则兼普天下</p>
+        <p class="footer-desc">记录技术、阅读与生活。用 Astro 构建，保持简单与克制。</p>
+      </div>
+
+      <div class="footer-col">
+        <h3 class="footer-title">快速导航</h3>
+        <ul class="footer-list">
+          {quickLinks.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h3 class="footer-title">更多</h3>
+        <ul class="footer-list">
+          {moreLinks.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h3 class="footer-title">站点信息</h3>
+        <ul class="footer-stats">
+          {
+            stats.map((s) => (
+              <li>
+                <strong>{s.value}</strong>
+                <span>{s.label}</span>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <div class="container">
+      <div class="footer-bottom-inner">
+        <span>© {year} 无需多言 Blog · 由 Astro 驱动</span>
+        <span>本站已运行 <strong id="footDays">--</strong> 天</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    margin-top: 46px;
+    border-top: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.62));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  :global([data-theme='dark']) .site-footer {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.05));
+  }
+
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 1.7fr 1fr 1fr 1.1fr;
+    gap: 32px;
+    padding: 40px 0 32px;
+  }
+
+  .footer-logo {
+    display: inline-flex;
+    align-items: center;
+    font-family: var(--font-serif);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-1);
+  }
+
+  .footer-logo svg {
+    width: 14px;
+    height: 14px;
+    margin: 0 2px;
+    color: var(--accent);
+  }
+
+  .footer-slogan {
+    margin: 14px 0 8px;
+    color: var(--text-1);
+    font-size: 13.5px;
+  }
+
+  .footer-desc {
+    margin: 0;
+    max-width: 300px;
+    color: var(--text-3);
+    font-size: 12.5px;
+    line-height: 1.8;
+  }
+
+  .footer-title {
+    margin: 0 0 14px;
+    color: var(--text-1);
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .footer-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .footer-list a {
+    color: var(--text-2);
+    font-size: 13.5px;
+    transition: color 0.2s ease, padding-left 0.2s ease;
+  }
+
+  .footer-list a:hover {
+    color: var(--accent-strong);
+    padding-left: 4px;
+  }
+
+  .footer-stats {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .footer-stats li {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .footer-stats strong {
+    color: var(--text-1);
+    font-size: 18px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .footer-stats span {
+    color: var(--text-2);
+    font-size: 12.5px;
+  }
+
+  .footer-bottom {
+    border-top: 1px dashed var(--border);
+  }
+
+  .footer-bottom-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 16px 0 22px;
+    color: var(--text-3);
+    font-size: 12.5px;
+  }
+
+  .footer-bottom-inner strong {
+    color: var(--text-1);
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (max-width: 860px) {
+    .footer-grid {
+      grid-template-columns: 1fr 1fr;
+      gap: 26px;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .footer-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  // 建站起始日，用于计算已运行天数（非当前日期，改动请修改此处）
+  const START = new Date('2026-03-01T00:00:00');
+  const el = document.getElementById('footDays');
+  if (el) {
+    const days = Math.floor((Date.now() - START.getTime()) / 86400000) + 1;
+    el.textContent = String(Math.max(1, days));
+  }
+</script>

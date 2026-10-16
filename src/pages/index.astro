@@ -1,0 +1,100 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Navbar from '../components/Navbar.astro';
+import Banner from '../components/Banner.astro';
+import SearchBar from '../components/SearchBar.astro';
+import ProfileCard from '../components/ProfileCard.astro';
+import NavCard from '../components/NavCard.astro';
+import ClockCard from '../components/ClockCard.astro';
+import VisitorCard from '../components/VisitorCard.astro';
+import PostCard from '../components/PostCard.astro';
+import Pagination from '../components/Pagination.astro';
+import MusicCard from '../components/MusicCard.astro';
+import WeatherCard from '../components/WeatherCard.astro';
+import CalendarCard from '../components/CalendarCard.astro';
+import FloatingWidgets from '../components/FloatingWidgets.astro';
+import TagCard from '../components/TagCard.astro';
+import Footer from '../components/Footer.astro';
+import { getCollection } from 'astro:content';
+
+const PAGE_SIZE = 6;
+
+const posts = (await getCollection('blog'))
+  .sort((a, b) => b.data.date.localeCompare(a.data.date))
+  .map((p, i) => ({
+    variant: i === 0 ? 'featured' : 'compact',
+    title: p.data.title,
+    description: p.data.description,
+    date: p.data.date,
+    views: p.data.views,
+    tags: p.data.tags,
+    image: p.data.cover,
+    href: `/blog/${p.id}`,
+    page: Math.floor(i / PAGE_SIZE) + 1,
+  }));
+
+const totalPages = Math.max(1, Math.ceil(posts.length / PAGE_SIZE));
+---
+
+<BaseLayout title="无需多言 Blog · 首页">
+  <Navbar />
+
+  <Banner />
+
+  <main class="container">
+    <SearchBar />
+
+    <div class="home-grid">
+      <div class="home-col">
+        <ProfileCard />
+        <NavCard />
+        <ClockCard />
+        <VisitorCard />
+      </div>
+
+      <div class="home-col" id="postList">
+        {
+          posts.map((post) => (
+            <div class="post-slot" data-page={post.page} hidden={post.page !== 1}>
+              <PostCard {...post} />
+            </div>
+          ))
+        }
+        <Pagination total={totalPages} />
+      </div>
+
+      <div class="home-col">
+        <MusicCard />
+        <WeatherCard />
+        <CalendarCard />
+        <TagCard />
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+
+  <FloatingWidgets />
+</BaseLayout>
+
+<script is:inline>
+  (function () {
+    var slots = document.querySelectorAll('.post-slot');
+    if (!slots.length) return;
+    window.addEventListener('blog:page', function (e) {
+      var page = e.detail && e.detail.page ? e.detail.page : 1;
+      slots.forEach(function (slot) {
+        slot.hidden = parseInt(slot.dataset.page, 10) !== page;
+      });
+    });
+  })();
+</script>
+
+<style>
+  .home-col {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    min-width: 0;
+  }
+</style>

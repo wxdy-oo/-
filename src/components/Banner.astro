@@ -1,0 +1,92 @@
+---
+interface Props {
+  title?: string;
+  subtitle?: string;
+  image?: string;
+}
+
+const {
+  title = 'Never Say Never',
+  subtitle = '穷则独善其身，达则兼普天下',
+  image = '/images/banner.jpg',
+} = Astro.props;
+---
+
+<section class="banner">
+  <img class="banner-img" src={image} alt="" />
+  <div class="banner-shade"></div>
+  <div class="banner-fade"></div>
+
+  <div class="banner-inner">
+    <h1 class="banner-title">{title}</h1>
+    <p class="banner-subtitle">{subtitle}</p>
+  </div>
+</section>
+
+<style>
+  .banner {
+    position: relative;
+    width: 100%;
+    height: clamp(360px, 48vw, 520px);
+    overflow: hidden;
+  }
+
+  .banner-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 34%;
+  }
+
+  .banner-shade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      180deg,
+      rgba(26, 20, 12, 0.3) 0%,
+      rgba(26, 20, 12, 0.06) 34%,
+      rgba(26, 20, 12, 0) 62%
+    );
+  }
+
+  .banner-fade {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 34%;
+    background: linear-gradient(180deg, transparent, var(--bg));
+  }
+
+  .banner-inner {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0 24px 46px;
+  }
+
+  .banner-title {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-weight: 700;
+    color: #fff;
+    font-size: clamp(38px, 5.4vw, 70px);
+    line-height: 1.08;
+    letter-spacing: 0.6px;
+    text-shadow: 0 4px 30px rgba(0, 0, 0, 0.35);
+  }
+
+  .banner-subtitle {
+    margin: 16px 0 0;
+    color: rgba(255, 255, 255, 0.94);
+    font-size: clamp(15px, 1.5vw, 21px);
+    letter-spacing: 1px;
+    text-shadow: 0 2px 16px rgba(0, 0, 0, 0.35);
+  }
+</style>

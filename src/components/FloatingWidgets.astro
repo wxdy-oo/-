@@ -1,0 +1,490 @@
+---
+import { getCollection } from 'astro:content';
+
+interface Props {
+  bubble?: string;
+  mascot?: string;
+}
+
+const { bubble = '要小鱼干！', mascot = '/images/mascot-cat.jpg' } = Astro.props;
+
+const posts = (await getCollection('blog')).map((p) => ({ slug: p.id, title: p.data.title }));
+---
+
+<div class="float-widget float-left" data-cat-widget>
+  <!-- 猫猫功能区弹窗 -->
+  <div class="cat-panel" data-cat-panel hidden>
+    <div class="cat-panel-head">
+      <img class="cat-avatar" src={mascot} alt="猫猫" />
+      <div class="cat-head-info">
+        <strong>猫猫的小屋</strong>
+        <span>喵~ 欢迎来到功能区</span>
+      </div>
+      <button class="cat-close" type="button" aria-label="关闭">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m6 6 12 12M18 6 6 18"></path>
+        </svg>
+      </button>
+    </div>
+
+    <div class="cat-fish">
+      <div class="cat-fish-info">
+        <svg class="fish-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M3 12c3-4.5 7-6.5 11-6.5 3.5 0 6 2.5 7 6.5-1 4-3.5 6.5-7 6.5-4 0-8-2-11-6.5Z"></path>
+          <path d="M3 12l3-2.5M3 12l3 2.5"></path>
+          <circle cx="16.5" cy="10.5" r="0.9" fill="currentColor" stroke="none"></circle>
+        </svg>
+        <div class="cat-fish-text">
+          <span>已投喂小鱼干</span>
+          <strong><b class="fish-count">0</b> 条</strong>
+        </div>
+      </div>
+      <button class="fish-feed" type="button">喂一条</button>
+    </div>
+
+    <div class="cat-grid">
+      <button class="cat-action" type="button" data-action="random">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="3.5" y="3.5" width="17" height="17" rx="4"></rect>
+          <circle cx="8.5" cy="8.5" r="1.3" fill="currentColor" stroke="none"></circle>
+          <circle cx="15.5" cy="15.5" r="1.3" fill="currentColor" stroke="none"></circle>
+          <circle cx="15.5" cy="8.5" r="1.3" fill="currentColor" stroke="none"></circle>
+          <circle cx="8.5" cy="15.5" r="1.3" fill="currentColor" stroke="none"></circle>
+        </svg>
+        随机一篇
+      </button>
+      <button class="cat-action" type="button" data-action="top">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 19V6"></path>
+          <path d="m6 11 6-6 6 6"></path>
+        </svg>
+        回到顶部
+      </button>
+      <button class="cat-action" type="button" data-action="theme">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M20 13.5A8 8 0 0 1 10.5 4 8 8 0 1 0 20 13.5Z"></path>
+        </svg>
+        切换主题
+      </button>
+      <button class="cat-action" type="button" data-action="search">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"></circle>
+          <path d="M20 20l-3.4-3.4"></path>
+        </svg>
+        去搜文章
+      </button>
+    </div>
+
+    <p class="cat-foot">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="7" cy="9" r="1.6"></circle>
+        <circle cx="12" cy="7" r="1.6"></circle>
+        <circle cx="17" cy="9" r="1.6"></circle>
+        <path d="M12 11c-3 0-5.5 2.2-5.5 5 0 1.8 1.4 3 3.2 3 1 0 1.6-.4 2.3-.4s1.3.4 2.3.4c1.8 0 3.2-1.2 3.2-3 0-2.8-2.5-5-5.5-5Z"></path>
+      </svg>
+      常来玩，喵~
+    </p>
+  </div>
+
+  <div class="bubble" data-cat-bubble>{bubble}</div>
+  <button class="mascot" type="button" aria-label="打开猫猫功能区">
+    <img src={mascot} alt="猫猫" />
+  </button>
+</div>
+
+<script is:inline define:vars={{ posts, defaultBubble: bubble }}>
+  (() => {
+    const root = document.querySelector('[data-cat-widget]');
+    if (!root) return;
+    const panel = root.querySelector('[data-cat-panel]');
+    const bubble = root.querySelector('[data-cat-bubble]');
+    const mascot = root.querySelector('.mascot');
+    const countEl = root.querySelector('.fish-count');
+    const KEY = 'cat:fish';
+
+    const getCount = () => {
+      try {
+        return parseInt(localStorage.getItem(KEY) || '0', 10) || 0;
+      } catch (e) {
+        return 0;
+      }
+    };
+    const render = () => {
+      countEl.textContent = String(getCount());
+    };
+    render();
+
+    const say = (text, ms) => {
+      bubble.textContent = text;
+      clearTimeout(bubble._t);
+      bubble._t = setTimeout(() => {
+        bubble.textContent = defaultBubble;
+      }, ms || 2200);
+    };
+
+    mascot.addEventListener('click', (e) => {
+      e.stopPropagation();
+      panel.hidden = !panel.hidden;
+    });
+    root.querySelector('.cat-close').addEventListener('click', () => {
+      panel.hidden = true;
+    });
+    document.addEventListener('click', (e) => {
+      if (!panel.hidden && !root.contains(e.target)) panel.hidden = true;
+    });
+
+    root.querySelector('.fish-feed').addEventListener('click', (e) => {
+      const n = getCount() + 1;
+      try {
+        localStorage.setItem(KEY, String(n));
+      } catch (err) {}
+      render();
+      say('谢谢投喂！喵~');
+      const plus = document.createElement('span');
+      plus.className = 'fish-plus';
+      plus.textContent = '+1';
+      e.currentTarget.appendChild(plus);
+      setTimeout(() => plus.remove(), 900);
+    });
+
+    root.querySelectorAll('.cat-action').forEach((btn) =>
+      btn.addEventListener('click', () => {
+        const action = btn.dataset.action;
+        if (action === 'random') {
+          if (posts.length) {
+            const p = posts[Math.floor(Math.random() * posts.length)];
+            location.href = '/blog/' + p.slug;
+          }
+        } else if (action === 'top') {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else if (action === 'theme') {
+          document.getElementById('themeToggle')?.click();
+        } else if (action === 'search') {
+          location.href = '/search';
+        }
+        if (action !== 'random') panel.hidden = true;
+      })
+    );
+  })();
+</script>
+
+<style>
+  .float-widget {
+    position: fixed;
+    bottom: 22px;
+    z-index: 30;
+  }
+
+  .float-left {
+    left: 22px;
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: flex-end;
+    gap: 8px;
+  }
+
+  .bubble {
+    position: relative;
+    margin-bottom: 26px;
+    padding: 7px 12px;
+    border-radius: 12px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+    color: var(--text-1);
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .bubble::after {
+    content: '';
+    position: absolute;
+    left: 10px;
+    bottom: -5px;
+    width: 10px;
+    height: 10px;
+    background: var(--card);
+    border-left: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    transform: rotate(45deg);
+  }
+
+  .mascot {
+    flex: none;
+    width: 62px;
+    height: 62px;
+    overflow: hidden;
+    border-radius: 50%;
+    border: 2px solid var(--card);
+    box-shadow: var(--shadow-sm);
+    background: var(--card);
+    cursor: pointer;
+    transition: transform 0.2s ease;
+  }
+
+  .mascot:hover {
+    transform: translateY(-3px) rotate(-3deg);
+  }
+
+  .mascot img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* ===== 猫猫功能区弹窗（与迷你播放器同款紧凑尺寸） ===== */
+  .cat-panel {
+    position: absolute;
+    left: 0;
+    bottom: 72px;
+    width: 236px;
+    padding: 12px;
+    border-radius: var(--radius);
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: 0 18px 44px -16px rgba(60, 40, 20, 0.45);
+    animation: cat-in 0.22s ease;
+  }
+
+  .cat-panel[hidden] {
+    display: none;
+  }
+
+  @keyframes cat-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px) scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .cat-panel-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .cat-avatar {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--accent-soft);
+  }
+
+  .cat-head-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .cat-head-info strong {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--text-1);
+  }
+
+  .cat-head-info span {
+    font-size: 11px;
+    color: var(--text-3);
+  }
+
+  .cat-close {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    color: var(--text-3);
+    transition: color 0.2s ease, background 0.2s ease;
+  }
+
+  .cat-close:hover {
+    color: var(--text-1);
+    background: var(--card-soft);
+  }
+
+  .cat-close svg {
+    width: 13px;
+    height: 13px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+
+  .cat-fish {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    background: var(--accent-soft);
+  }
+
+  .cat-fish-info {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+  }
+
+  .fish-icon {
+    flex: none;
+    width: 19px;
+    height: 19px;
+    color: var(--accent-strong);
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .cat-fish-text {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cat-fish-text span {
+    font-size: 10.5px;
+    color: var(--text-3);
+    line-height: 1.4;
+  }
+
+  .cat-fish-text strong {
+    font-size: 13px;
+    color: var(--text-1);
+    line-height: 1.4;
+  }
+
+  .cat-fish-text b {
+    color: var(--accent-strong);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .fish-feed {
+    position: relative;
+    flex: none;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: linear-gradient(160deg, var(--accent), var(--accent-strong));
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 0 8px 16px -8px rgba(232, 137, 11, 0.9);
+    transition: filter 0.2s ease, transform 0.2s ease;
+  }
+
+  .fish-feed:hover {
+    filter: brightness(1.06);
+    transform: translateY(-1px);
+  }
+
+  .fish-plus {
+    position: absolute;
+    top: -6px;
+    right: 4px;
+    color: var(--accent-strong);
+    font-size: 13px;
+    font-weight: 700;
+    animation: fish-plus 0.9s ease forwards;
+    pointer-events: none;
+  }
+
+  @keyframes fish-plus {
+    from {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-22px);
+    }
+  }
+
+  .cat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .cat-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 4px;
+    border-radius: var(--radius-sm);
+    background: var(--card-soft);
+    border: 1px solid var(--border);
+    color: var(--text-2);
+    font-size: 12px;
+    font-weight: 600;
+    transition: color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  }
+
+  .cat-action:hover {
+    color: var(--accent-strong);
+    border-color: rgba(246, 161, 28, 0.5);
+    transform: translateY(-1px);
+  }
+
+  .cat-action svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .cat-foot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin: 10px 0 0;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border);
+    font-size: 11px;
+    color: var(--text-3);
+  }
+
+  .cat-foot svg {
+    width: 13px;
+    height: 13px;
+    color: var(--accent);
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  @media (max-width: 640px) {
+    .float-left {
+      left: 14px;
+      bottom: 14px;
+    }
+
+    .bubble {
+      display: none;
+    }
+
+    .cat-panel {
+      width: min(236px, calc(100vw - 28px));
+    }
+  }
+</style>

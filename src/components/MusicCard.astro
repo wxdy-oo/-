@@ -1,0 +1,501 @@
+---
+import { getTracks } from '../utils/tracks';
+
+// 展示数据与全局播放器（GlobalPlayer.astro）共用同一份扫描结果；
+// 本组件只是播放器的"遥控视图"，音频由全局播放器独占，跨页面不断歌
+const tracks = getTracks();
+---
+
+<section class="card music-card" data-music-card>
+  <div class="music-head">
+    <div class="music-cover">
+      <img class="mc-cover" src={tracks[0]?.cover ?? '/music/covers/default.jpg'} alt={tracks[0]?.title ?? 'music'} />
+    </div>
+    <div class="music-meta">
+      <span class="music-label">CLOUD MUSIC</span>
+      <h2 class="music-song mc-title">{tracks[0]?.title ?? '暂无歌曲'}</h2>
+      <p class="music-artist mc-artist">{tracks[0]?.artist ?? ''}</p>
+    </div>
+  </div>
+
+  <div class="music-progress">
+    <span class="time mc-current">00:00</span>
+    <div class="track mc-track">
+      <div class="track-fill mc-fill" style="width:0%"></div>
+      <span class="track-thumb mc-thumb" style="left:0%"></span>
+    </div>
+    <span class="time mc-duration">00:00</span>
+  </div>
+
+  <div class="music-controls">
+    <button class="ctrl mc-mode" type="button" aria-label="播放模式：列表循环" title="列表循环">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M17 2l4 4-4 4"></path>
+        <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+        <path d="M7 22l-4-4 4-4"></path>
+        <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+      </svg>
+    </button>
+
+    <button class="ctrl mc-prev" type="button" aria-label="上一首">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M6 5h2v14H6z"></path>
+        <path d="M20 5v14L9 12z"></path>
+      </svg>
+    </button>
+
+    <button class="ctrl ctrl-play mc-play" type="button" aria-label="播放">
+      <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M8 5.4v13.2L19 12z"></path>
+      </svg>
+      <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="display:none">
+        <path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.6z"></path>
+      </svg>
+    </button>
+
+    <button class="ctrl mc-next" type="button" aria-label="下一首">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M16 5h2v14h-2z"></path>
+        <path d="M4 5v14l11-7z"></path>
+      </svg>
+    </button>
+
+    <button class="ctrl mc-vol" type="button" aria-label="音量">
+      <svg class="icon-vol" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M11 5 6 9H3v6h3l5 4z" fill="currentColor" stroke="none"></path>
+        <path d="M16 9.5a3.6 3.6 0 0 1 0 5"></path>
+        <path d="M19 7a7 7 0 0 1 0 10"></path>
+      </svg>
+      <svg class="icon-mute" viewBox="0 0 24 24" aria-hidden="true" style="display:none">
+        <path d="M11 5 6 9H3v6h3l5 4z" fill="currentColor" stroke="none"></path>
+        <path d="m16 9 5 5M21 9l-5 5"></path>
+      </svg>
+    </button>
+  </div>
+
+  <ul class="music-list">
+    {
+      tracks.map((t, i) => (
+        <li>
+          <button class:list={['mc-item', { active: i === 0 }]} type="button" data-index={i}>
+            <img class="mc-item-cover" src={t.cover} alt="" />
+            <span class="mc-item-info">
+              <span class="mc-item-title">{t.title}</span>
+              <span class="mc-item-artist">{t.artist}</span>
+            </span>
+            <svg class="mc-item-eq" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="4" y="10" width="3" height="10" rx="1"></rect>
+              <rect x="10.5" y="4" width="3" height="16" rx="1"></rect>
+              <rect x="17" y="8" width="3" height="12" rx="1"></rect>
+            </svg>
+          </button>
+        </li>
+      ))
+    }
+  </ul>
+</section>
+
+<script is:inline define:vars={{ tracks }}>
+  (() => {
+    const root = document.querySelector('[data-music-card]');
+    if (!root || !tracks.length) return;
+
+    const cover = root.querySelector('.mc-cover');
+    const titleEl = root.querySelector('.mc-title');
+    const artistEl = root.querySelector('.mc-artist');
+    const curEl = root.querySelector('.mc-current');
+    const durEl = root.querySelector('.mc-duration');
+    const track = root.querySelector('.mc-track');
+    const fill = root.querySelector('.mc-fill');
+    const thumb = root.querySelector('.mc-thumb');
+    const playBtn = root.querySelector('.mc-play');
+    const iconPlay = playBtn.querySelector('.icon-play');
+    const iconPause = playBtn.querySelector('.icon-pause');
+    const modeBtn = root.querySelector('.mc-mode');
+    const volBtn = root.querySelector('.mc-vol');
+    const iconVol = volBtn.querySelector('.icon-vol');
+    const iconMute = volBtn.querySelector('.icon-mute');
+    const items = [...root.querySelectorAll('.mc-item')];
+    const MODE_NAMES = ['列表循环', '单曲循环', '随机播放'];
+    let dragging = false;
+    let seeking = null;
+
+    const fmt = (s) => {
+      if (!isFinite(s)) return '00:00';
+      s = Math.floor(s);
+      return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+    };
+
+    // 根据全局播放器广播的状态刷新本卡片 UI
+    const render = (st) => {
+      const t = tracks[st.index] || tracks[0];
+      if (titleEl.textContent !== t.title) {
+        cover.src = t.cover;
+        cover.alt = t.title;
+        titleEl.textContent = t.title;
+        artistEl.textContent = t.artist;
+      }
+      items.forEach((el, j) => el.classList.toggle('active', j === st.index));
+      iconPlay.style.display = st.playing ? 'none' : '';
+      iconPause.style.display = st.playing ? '' : 'none';
+      root.classList.toggle('playing', st.playing);
+      playBtn.setAttribute('aria-label', st.playing ? '暂停' : '播放');
+      modeBtn.classList.toggle('mode-one', st.mode === 1);
+      modeBtn.classList.toggle('mode-shuffle', st.mode === 2);
+      modeBtn.title = MODE_NAMES[st.mode] || MODE_NAMES[0];
+      iconVol.style.display = st.muted ? 'none' : '';
+      iconMute.style.display = st.muted ? '' : 'none';
+      volBtn.classList.toggle('muted', st.muted);
+      durEl.textContent = fmt(st.duration);
+      const p = seeking ?? (st.duration > 0 ? (st.currentTime / st.duration) * 100 : 0);
+      if (seeking === null && !dragging) {
+        fill.style.width = p + '%';
+        thumb.style.left = p + '%';
+        curEl.textContent = fmt(st.currentTime);
+      }
+    };
+
+    document.addEventListener('player:state', (e) => render(e.detail));
+
+    const player = () => window.__player;
+
+    playBtn.addEventListener('click', () => player()?.toggle());
+    root.querySelector('.mc-prev').addEventListener('click', () => player()?.prev());
+    root.querySelector('.mc-next').addEventListener('click', () => player()?.next());
+    modeBtn.addEventListener('click', () => player()?.cycleMode());
+    volBtn.addEventListener('click', () => player()?.toggleMute());
+    items.forEach((el) =>
+      el.addEventListener('click', () => player()?.playIndex(parseInt(el.dataset.index, 10)))
+    );
+
+    const previewSeek = (e) => {
+      const rect = track.getBoundingClientRect();
+      const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+      seeking = ratio * 100;
+      fill.style.width = seeking + '%';
+      thumb.style.left = seeking + '%';
+      const st = player()?.getState();
+      if (st && isFinite(st.duration)) curEl.textContent = fmt(ratio * st.duration);
+      return ratio;
+    };
+
+    track.addEventListener('pointerdown', (e) => {
+      dragging = true;
+      track.setPointerCapture(e.pointerId);
+      player()?.seek(previewSeek(e));
+    });
+    track.addEventListener('pointermove', (e) => {
+      if (dragging) player()?.seek(previewSeek(e));
+    });
+    track.addEventListener('pointerup', (e) => {
+      if (dragging) player()?.seek(previewSeek(e));
+      dragging = false;
+      seeking = null;
+    });
+
+    // 播放器可能在脚本之后就绪（布局中位于页面内容之后）
+    if (window.__player) render(window.__player.getState());
+    else document.addEventListener('player:ready', () => render(window.__player.getState()), { once: true });
+  })();
+</script>
+
+<style>
+  .music-card {
+    position: relative;
+    padding: 26px 24px;
+    background: linear-gradient(180deg, #fffdf7 0%, #ffffff 60%, #fdf3e2 100%);
+  }
+
+  :global([data-theme='dark']) .music-card {
+    background: linear-gradient(180deg, #26242b 0%, #201f24 60%, #2b2418 100%);
+  }
+
+  .music-head {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .music-cover {
+    flex: none;
+    width: 86px;
+    height: 86px;
+    overflow: hidden;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 10px 24px -12px rgba(60, 40, 20, 0.65);
+  }
+
+  :global([data-theme='dark']) .music-cover {
+    border-color: rgba(255, 255, 255, 0.14);
+  }
+
+  .music-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .playing .music-cover img {
+    animation: mc-spin 14s linear infinite;
+  }
+
+  @keyframes mc-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .music-meta {
+    min-width: 0;
+  }
+
+  .music-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.6px;
+    color: var(--accent-strong);
+  }
+
+  .music-song {
+    margin: 6px 0 2px;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .music-artist {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .music-progress {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 24px;
+  }
+
+  .time {
+    flex: none;
+    font-size: 12px;
+    color: var(--text-2);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .track {
+    position: relative;
+    flex: 1;
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(140, 120, 100, 0.18);
+    cursor: pointer;
+    touch-action: none;
+  }
+
+  .track-fill {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-strong));
+    pointer-events: none;
+  }
+
+  .track-thumb {
+    position: absolute;
+    top: 50%;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: var(--accent-strong);
+    transform: translate(-30%, -50%);
+    box-shadow: 0 0 0 4px rgba(246, 161, 28, 0.2);
+    pointer-events: none;
+  }
+
+  .music-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 22px;
+    padding: 0 4px;
+  }
+
+  .ctrl {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    color: var(--text-2);
+    transition: color 0.2s ease, background 0.2s ease;
+  }
+
+  .ctrl:hover {
+    color: var(--accent-strong);
+    background: rgba(246, 161, 28, 0.12);
+  }
+
+  .ctrl svg {
+    width: 19px;
+    height: 19px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .ctrl.mode-one::after {
+    content: '1';
+    position: absolute;
+    top: 1px;
+    right: 2px;
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--accent-strong);
+  }
+
+  .ctrl.mode-one,
+  .ctrl.mode-shuffle {
+    color: var(--accent-strong);
+  }
+
+  .ctrl.mode-shuffle svg {
+    transform: rotate(90deg);
+  }
+
+  .ctrl.muted {
+    color: var(--text-3);
+  }
+
+  .ctrl-play {
+    width: 52px;
+    height: 52px;
+    color: #fff;
+    background: linear-gradient(160deg, var(--accent), var(--accent-strong));
+    box-shadow: 0 12px 24px -10px rgba(232, 137, 11, 0.9);
+  }
+
+  .ctrl-play:hover {
+    color: #fff;
+    background: linear-gradient(160deg, var(--accent), var(--accent-strong));
+    filter: brightness(1.04);
+  }
+
+  .ctrl-play svg {
+    width: 22px;
+    height: 22px;
+    margin-left: 0;
+    fill: currentColor;
+    stroke: none;
+  }
+
+  .music-list {
+    list-style: none;
+    margin: 20px 0 0;
+    padding: 14px 0 0;
+    border-top: 1px dashed var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .mc-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    text-align: left;
+    transition: background 0.2s ease;
+  }
+
+  .mc-item:hover {
+    background: rgba(246, 161, 28, 0.08);
+  }
+
+  .mc-item.active {
+    background: var(--accent-soft);
+  }
+
+  .mc-item-cover {
+    flex: none;
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    object-fit: cover;
+  }
+
+  .mc-item-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .mc-item-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mc-item-artist {
+    font-size: 12px;
+    color: var(--text-3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mc-item-eq {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    fill: var(--accent-strong);
+    opacity: 0;
+  }
+
+  .mc-item.active .mc-item-eq {
+    opacity: 1;
+  }
+
+  .playing .mc-item.active .mc-item-eq rect {
+    animation: mc-eq 0.9s ease-in-out infinite;
+    transform-origin: bottom;
+  }
+
+  .playing .mc-item.active .mc-item-eq rect:nth-child(2) {
+    animation-delay: 0.25s;
+  }
+
+  .playing .mc-item.active .mc-item-eq rect:nth-child(3) {
+    animation-delay: 0.5s;
+  }
+
+  @keyframes mc-eq {
+    0%,
+    100% {
+      transform: scaleY(1);
+    }
+    50% {
+      transform: scaleY(0.35);
+    }
+  }
+</style>

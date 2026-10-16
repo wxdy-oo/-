@@ -1,0 +1,203 @@
+---
+const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
+
+const items = [
+  { label: '首页', href: '/' },
+  { label: '开源项目', href: '/projects' },
+  { label: '归档', href: '/archive' },
+  { label: '照片墙', href: '/photos' },
+  { label: '音乐', href: '/music' },
+  { label: '说说', href: '/shuoshuo' },
+  { label: '留言墙', href: '/message' },
+  { label: '友链', href: '/links' },
+  { label: '关于', href: '/about' },
+].map((it) => ({ ...it, active: it.href === path }));
+---
+
+<header class="site-header">
+  <div class="nav container">
+    <a class="brand" href="/" aria-label="无需多言 Blog 首页">
+      <span>无需多言</span>
+      <svg class="brand-spark" viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M12 1c.9 5.2 4.9 9.2 10.1 10.1C16.9 12.1 12.9 16.1 12 21.3 11.1 16.1 7.1 12.1 1.9 11.1 7.1 10.2 11.1 6.2 12 1z"
+          fill="currentColor"></path>
+      </svg>
+      <span>Blog</span>
+    </a>
+
+    <nav class="nav-links" aria-label="主导航">
+      {
+        items.map((it) => (
+          <a class:list={['nav-link', { active: it.active }]} href={it.href}>
+            {it.label}
+          </a>
+        ))
+      }
+    </nav>
+
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="切换深浅色主题">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" fill="currentColor"></path>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.95),
+      rgba(255, 255, 255, 0.88)
+    );
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  :global([data-theme='dark']) .site-header {
+    background: linear-gradient(
+      180deg,
+      rgba(23, 22, 27, 0.97),
+      rgba(23, 22, 27, 0.9)
+    );
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .nav {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    height: 64px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    flex: none;
+    font-family: var(--font-serif);
+    font-weight: 700;
+    font-size: 23px;
+    letter-spacing: 0.2px;
+    color: var(--text-1);
+  }
+
+  .brand-spark {
+    width: 14px;
+    height: 14px;
+    margin: 0 2px;
+    color: var(--accent);
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-left: auto;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .nav-links::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav-link {
+    position: relative;
+    flex: none;
+    padding: 8px 14px;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-1);
+    border-radius: 10px;
+    transition: color 0.2s ease, background 0.2s ease;
+  }
+
+  .nav-link:hover {
+    color: var(--accent-strong);
+    background: var(--card-soft);
+  }
+
+  .nav-link.active {
+    color: var(--accent-strong);
+    font-weight: 600;
+  }
+
+  .nav-link.active::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent-strong);
+    transform: translateX(-50%);
+  }
+
+  .theme-toggle {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    margin-left: 6px;
+    border-radius: 10px;
+    color: var(--text-1);
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+
+  .theme-toggle:hover {
+    color: var(--accent-strong);
+    background: rgba(255, 255, 255, 0.34);
+  }
+
+  :global([data-theme='dark']) .theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .theme-toggle svg {
+    width: 21px;
+    height: 21px;
+  }
+
+  @media (max-width: 860px) {
+    .nav {
+      gap: 12px;
+    }
+
+    .brand {
+      font-size: 20px;
+    }
+
+    .nav-link {
+      padding: 8px 10px;
+      font-size: 14px;
+    }
+  }
+</style>
+
+<script is:inline>
+  (function () {
+    var btn = document.getElementById('themeToggle');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      var root = document.documentElement;
+      var isDark = root.getAttribute('data-theme') === 'dark';
+      if (isDark) {
+        root.removeAttribute('data-theme');
+      } else {
+        root.setAttribute('data-theme', 'dark');
+      }
+      try {
+        localStorage.setItem('theme', isDark ? 'light' : 'dark');
+      } catch (e) {}
+    });
+  })();
+</script>

@@ -1,0 +1,45 @@
+---
+import '../styles/global.css';
+import SakuraPetals from '../components/SakuraPetals.astro';
+import GlobalPlayer from '../components/GlobalPlayer.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = '无需多言 Blog',
+  description = '穷则独善其身，达则兼普天下 —— 记录技术、阅读与生活。',
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <script is:inline>
+      // 在样式渲染前应用主题，避免闪烁
+      (function () {
+        try {
+          var saved = localStorage.getItem('theme');
+          var prefersDark =
+            window.matchMedia &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches;
+          if (saved === 'dark' || (!saved && prefersDark)) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <slot />
+    <SakuraPetals />
+    <GlobalPlayer />
+  </body>
+</html>

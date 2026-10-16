@@ -1,0 +1,91 @@
+---
+interface Props {
+  total?: number;
+}
+
+const { total = 1 } = Astro.props;
+---
+
+<nav class="pagination" aria-label="分页导航" data-total={total}>
+  <button class="page-btn page-prev" type="button">上一页</button>
+  <span class="page-info"><b class="page-cur">1</b> / {total}</span>
+  <button class="page-btn page-next" type="button">下一页</button>
+</nav>
+
+<script>
+  const nav = document.querySelector<HTMLElement>('.pagination');
+
+  if (nav) {
+    const total = Math.max(1, parseInt(nav.dataset.total || '1', 10));
+    const prev = nav.querySelector<HTMLButtonElement>('.page-prev')!;
+    const next = nav.querySelector<HTMLButtonElement>('.page-next')!;
+    const cur = nav.querySelector<HTMLElement>('.page-cur')!;
+    let page = 1;
+
+    const apply = () => {
+      cur.textContent = String(page);
+      prev.disabled = page <= 1;
+      next.disabled = page >= total;
+      window.dispatchEvent(new CustomEvent('blog:page', { detail: { page } }));
+    };
+
+    prev.addEventListener('click', () => {
+      if (page > 1) {
+        page -= 1;
+        apply();
+      }
+    });
+
+    next.addEventListener('click', () => {
+      if (page < total) {
+        page += 1;
+        apply();
+      }
+    });
+
+    apply();
+  }
+</script>
+
+<style>
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    padding: 4px 0;
+  }
+
+  .page-btn {
+    padding: 9px 22px;
+    border-radius: 12px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+    color: var(--text-2);
+    font-size: 14px;
+    transition: color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  }
+
+  .page-btn:hover:not(:disabled) {
+    color: var(--accent-strong);
+    border-color: rgba(246, 161, 28, 0.45);
+    transform: translateY(-1px);
+  }
+
+  .page-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .page-info {
+    color: var(--text-2);
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .page-cur {
+    color: var(--text-1);
+    font-weight: 700;
+  }
+</style>

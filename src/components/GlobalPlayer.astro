@@ -1,0 +1,723 @@
+---
+import { getTracks } from '../utils/tracks';
+
+const tracks = getTracks();
+---
+
+{
+  tracks.length > 0 && (
+    <div class="gp" data-gp>
+      {/* 迷你播放面板 */}
+      <div class="gp-panel" data-gp-panel hidden>
+        <div class="gp-panel-head">
+          <img class="gp-cover" src={tracks[0].cover} alt="" />
+          <div class="gp-info">
+            <strong class="gp-title">{tracks[0].title}</strong>
+            <span class="gp-artist">{tracks[0].artist}</span>
+          </div>
+          <button class="gp-close" type="button" aria-label="收起播放器">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m6 6 12 12M18 6 6 18"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="gp-progress">
+          <span class="gp-time gp-current">00:00</span>
+          <div class="gp-track">
+            <div class="gp-fill" style="width:0%"></div>
+          </div>
+          <span class="gp-time gp-duration">00:00</span>
+        </div>
+
+        <div class="gp-controls">
+          <button class="gp-ctrl gp-mode" type="button" title="列表循环" aria-label="播放模式">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M17 2l4 4-4 4"></path>
+              <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+              <path d="M7 22l-4-4 4-4"></path>
+              <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+            </svg>
+          </button>
+          <button class="gp-ctrl gp-prev" type="button" aria-label="上一首">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M6 5h2v14H6z"></path>
+              <path d="M20 5v14L9 12z"></path>
+            </svg>
+          </button>
+          <button class="gp-ctrl gp-play" type="button" aria-label="播放">
+            <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M8 5.4v13.2L19 12z"></path>
+            </svg>
+            <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="display:none">
+              <path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.6z"></path>
+            </svg>
+          </button>
+          <button class="gp-ctrl gp-next" type="button" aria-label="下一首">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M16 5h2v14h-2z"></path>
+              <path d="M4 5v14l11-7z"></path>
+            </svg>
+          </button>
+          <button class="gp-ctrl gp-vol" type="button" aria-label="音量">
+            <svg class="icon-vol" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M11 5 6 9H3v6h3l5 4z" fill="currentColor" stroke="none"></path>
+              <path d="M16 9.5a3.6 3.6 0 0 1 0 5"></path>
+              <path d="M19 7a7 7 0 0 1 0 10"></path>
+            </svg>
+            <svg class="icon-mute" viewBox="0 0 24 24" aria-hidden="true" style="display:none">
+              <path d="M11 5 6 9H3v6h3l5 4z" fill="currentColor" stroke="none"></path>
+              <path d="m16 9 5 5M21 9l-5 5"></path>
+            </svg>
+          </button>
+        </div>
+
+        <ul class="gp-list">
+          {tracks.map((t, i) => (
+            <li>
+              <button class:list={['gp-item', { active: i === 0 }]} type="button" data-index={i}>
+                <span class="gp-item-title">{t.title}</span>
+                <span class="gp-item-artist">{t.artist}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* 悬浮圆圈 */}
+      <button class="gp-fab" type="button" aria-label="打开播放器">
+        <img class="gp-fab-cover" src={tracks[0].cover} alt="" />
+        <svg class="gp-fab-eq" viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="5" y="10" width="3" height="9" rx="1"></rect>
+          <rect x="10.5" y="5" width="3" height="14" rx="1"></rect>
+          <rect x="16" y="8" width="3" height="11" rx="1"></rect>
+        </svg>
+      </button>
+
+      <audio class="gp-audio" preload="metadata"></audio>
+    </div>
+  )
+}
+
+<script is:inline define:vars={{ tracks }}>
+  (() => {
+    if (!tracks.length) return;
+    const root = document.querySelector('[data-gp]');
+    if (!root) return;
+
+    const audio = root.querySelector('.gp-audio');
+    const fab = root.querySelector('.gp-fab');
+    const fabCover = root.querySelector('.gp-fab-cover');
+    const panel = root.querySelector('[data-gp-panel]');
+    const cover = root.querySelector('.gp-cover');
+    const titleEl = root.querySelector('.gp-title');
+    const artistEl = root.querySelector('.gp-artist');
+    const curEl = root.querySelector('.gp-current');
+    const durEl = root.querySelector('.gp-duration');
+    const trackBar = root.querySelector('.gp-track');
+    const fill = root.querySelector('.gp-fill');
+    const playBtn = root.querySelector('.gp-play');
+    const iconPlay = playBtn.querySelector('.icon-play');
+    const iconPause = playBtn.querySelector('.icon-pause');
+    const modeBtn = root.querySelector('.gp-mode');
+    const volBtn = root.querySelector('.gp-vol');
+    const iconVol = volBtn.querySelector('.icon-vol');
+    const iconMute = volBtn.querySelector('.icon-mute');
+    const items = [...root.querySelectorAll('.gp-item')];
+
+    const MODES = ['loop', 'one', 'shuffle'];
+    const STORE_KEY = 'gp:state';
+    let mode = 0;
+    let index = 0;
+    let dragging = false;
+
+    const fmt = (s) => {
+      if (!isFinite(s)) return '00:00';
+      s = Math.floor(s);
+      return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+    };
+
+    const save = () => {
+      try {
+        localStorage.setItem(
+          STORE_KEY,
+          JSON.stringify({ i: index, t: audio.currentTime || 0, playing: !audio.paused, mode, muted: audio.muted })
+        );
+      } catch (e) {}
+    };
+
+    const readSaved = () => {
+      try {
+        return JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
+      } catch (e) {
+        return null;
+      }
+    };
+
+    const emit = () => {
+      document.dispatchEvent(
+        new CustomEvent('player:state', {
+          detail: {
+            index,
+            playing: !audio.paused,
+            currentTime: audio.currentTime || 0,
+            duration: audio.duration || 0,
+            mode,
+            muted: audio.muted,
+          },
+        })
+      );
+    };
+
+    const applyTrackUI = () => {
+      const t = tracks[index];
+      fabCover.src = t.cover;
+      cover.src = t.cover;
+      titleEl.textContent = t.title;
+      artistEl.textContent = t.artist;
+      items.forEach((el, j) => el.classList.toggle('active', j === index));
+    };
+
+    const load = (i, autoplay, at) => {
+      index = ((i % tracks.length) + tracks.length) % tracks.length;
+      audio.src = tracks[index].src;
+      applyTrackUI();
+      curEl.textContent = '00:00';
+      durEl.textContent = '00:00';
+      fill.style.width = '0%';
+      if (at) {
+        audio.addEventListener('loadedmetadata', () => {
+          audio.currentTime = Math.min(at, audio.duration || at);
+        }, { once: true });
+      }
+      if (autoplay) audio.play().catch(() => {});
+      save();
+      emit();
+    };
+
+    const syncUI = () => {
+      const playing = !audio.paused;
+      iconPlay.style.display = playing ? 'none' : '';
+      iconPause.style.display = playing ? '' : 'none';
+      root.classList.toggle('playing', playing);
+      playBtn.setAttribute('aria-label', playing ? '暂停' : '播放');
+      emit();
+    };
+
+    const syncVolIcon = () => {
+      iconVol.style.display = audio.muted ? 'none' : '';
+      iconMute.style.display = audio.muted ? '' : 'none';
+      volBtn.classList.toggle('muted', audio.muted);
+    };
+
+    // 浏览器禁止带声音自动播放时：先静音开播，首次交互恢复声音
+    const autoplayResume = () => {
+      audio.play().catch(() => {
+        audio.muted = true;
+        syncVolIcon();
+        audio.play().catch(() => {});
+        const unmute = () => {
+          audio.muted = false;
+          syncVolIcon();
+          save();
+          window.removeEventListener('pointerdown', unmute);
+          window.removeEventListener('keydown', unmute);
+        };
+        window.addEventListener('pointerdown', unmute);
+        window.addEventListener('keydown', unmute);
+      });
+    };
+
+    // 面板开合
+    fab.addEventListener('click', () => {
+      panel.hidden = !panel.hidden;
+    });
+    root.querySelector('.gp-close').addEventListener('click', () => {
+      panel.hidden = true;
+    });
+    document.addEventListener('click', (e) => {
+      if (!panel.hidden && !root.contains(e.target)) panel.hidden = true;
+    });
+
+    // 控制
+    playBtn.addEventListener('click', () => {
+      if (audio.paused) audio.play().catch(() => {});
+      else audio.pause();
+    });
+    root.querySelector('.gp-prev').addEventListener('click', () => load(index - 1, true));
+    root.querySelector('.gp-next').addEventListener('click', () => load(index + 1, true));
+    modeBtn.addEventListener('click', () => {
+      mode = (mode + 1) % MODES.length;
+      modeBtn.classList.toggle('mode-one', MODES[mode] === 'one');
+      modeBtn.classList.toggle('mode-shuffle', MODES[mode] === 'shuffle');
+      modeBtn.title = { loop: '列表循环', one: '单曲循环', shuffle: '随机播放' }[MODES[mode]];
+      save();
+      emit();
+    });
+    volBtn.addEventListener('click', () => {
+      audio.muted = !audio.muted;
+      syncVolIcon();
+      save();
+    });
+    items.forEach((el) =>
+      el.addEventListener('click', () => load(parseInt(el.dataset.index, 10), true))
+    );
+
+    // 进度
+    audio.addEventListener('play', syncUI);
+    audio.addEventListener('pause', () => {
+      syncUI();
+      save();
+    });
+    audio.addEventListener('loadedmetadata', () => {
+      durEl.textContent = fmt(audio.duration);
+    });
+    audio.addEventListener('timeupdate', () => {
+      if (!dragging && isFinite(audio.duration) && audio.duration > 0) {
+        fill.style.width = (audio.currentTime / audio.duration) * 100 + '%';
+        curEl.textContent = fmt(audio.currentTime);
+      }
+      if (!audio._gpSaved || Date.now() - audio._gpSaved > 2000) {
+        audio._gpSaved = Date.now();
+        save();
+      }
+    });
+    audio.addEventListener('ended', () => {
+      const m = MODES[mode];
+      if (m === 'one') {
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
+      } else if (m === 'shuffle') {
+        let n = index;
+        while (tracks.length > 1 && n === index) n = Math.floor(Math.random() * tracks.length);
+        load(n, true);
+      } else {
+        load(index + 1, true);
+      }
+    });
+
+    const seekFromEvent = (e) => {
+      const rect = trackBar.getBoundingClientRect();
+      const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+      if (isFinite(audio.duration)) {
+        audio.currentTime = ratio * audio.duration;
+        fill.style.width = ratio * 100 + '%';
+        curEl.textContent = fmt(audio.currentTime);
+      }
+    };
+    trackBar.addEventListener('pointerdown', (e) => {
+      dragging = true;
+      trackBar.setPointerCapture(e.pointerId);
+      seekFromEvent(e);
+    });
+    trackBar.addEventListener('pointermove', (e) => {
+      if (dragging) seekFromEvent(e);
+    });
+    trackBar.addEventListener('pointerup', () => {
+      dragging = false;
+    });
+
+    window.addEventListener('beforeunload', save);
+
+    // 供 MusicCard 等视图遥控的全局 API
+    window.__player = {
+      play: () => audio.play().catch(() => {}),
+      pause: () => audio.pause(),
+      toggle: () => (audio.paused ? audio.play().catch(() => {}) : audio.pause()),
+      next: () => load(index + 1, true),
+      prev: () => load(index - 1, true),
+      playIndex: (i) => load(i, true),
+      cycleMode: () => modeBtn.click(),
+      toggleMute: () => volBtn.click(),
+      seek: (ratio) => {
+        if (isFinite(audio.duration)) audio.currentTime = ratio * audio.duration;
+      },
+      getState: () => ({
+        index,
+        playing: !audio.paused,
+        currentTime: audio.currentTime || 0,
+        duration: audio.duration || 0,
+        mode,
+        muted: audio.muted,
+        tracks,
+      }),
+    };
+    document.dispatchEvent(new CustomEvent('player:ready'));
+
+    // 恢复上次进度；首次访问自动开播
+    const saved = readSaved();
+    if (saved && typeof saved.i === 'number' && tracks[saved.i]) {
+      mode = saved.mode || 0;
+      if (mode) {
+        modeBtn.classList.toggle('mode-one', MODES[mode] === 'one');
+        modeBtn.classList.toggle('mode-shuffle', MODES[mode] === 'shuffle');
+      }
+      audio.muted = !!saved.muted;
+      syncVolIcon();
+      load(saved.i, false, saved.t || 0);
+      if (saved.playing) autoplayResume();
+    } else {
+      load(0, false);
+      autoplayResume();
+    }
+    syncUI();
+  })();
+</script>
+
+<style>
+  .gp {
+    position: fixed;
+    right: 22px;
+    bottom: 22px;
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 12px;
+  }
+
+  /* 悬浮圆圈（与猫咪挂件同宽对齐） */
+  .gp-fab {
+    position: relative;
+    width: 62px;
+    height: 62px;
+    border-radius: 50%;
+    padding: 3px;
+    background: linear-gradient(160deg, var(--accent), var(--accent-strong));
+    box-shadow: 0 12px 28px -10px rgba(232, 137, 11, 0.85);
+    transition: transform 0.25s ease;
+  }
+
+  .gp-fab:hover {
+    transform: scale(1.06);
+  }
+
+  .gp-fab-cover {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .playing .gp-fab-cover {
+    animation: gp-spin 12s linear infinite;
+  }
+
+  @keyframes gp-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .gp-fab-eq {
+    position: absolute;
+    right: -2px;
+    bottom: -2px;
+    width: 20px;
+    height: 20px;
+    padding: 4px;
+    box-sizing: content-box;
+    border-radius: 50%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    fill: var(--accent-strong);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .playing .gp-fab-eq {
+    opacity: 1;
+  }
+
+  .playing .gp-fab-eq rect {
+    animation: gp-eq 0.9s ease-in-out infinite;
+    transform-origin: bottom;
+  }
+
+  .playing .gp-fab-eq rect:nth-child(2) {
+    animation-delay: 0.25s;
+  }
+
+  .playing .gp-fab-eq rect:nth-child(3) {
+    animation-delay: 0.5s;
+  }
+
+  @keyframes gp-eq {
+    0%,
+    100% {
+      transform: scaleY(1);
+    }
+    50% {
+      transform: scaleY(0.35);
+    }
+  }
+
+  /* 迷你面板 */
+  .gp-panel {
+    width: 300px;
+    padding: 16px;
+    border-radius: var(--radius);
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: 0 18px 44px -16px rgba(60, 40, 20, 0.45);
+    animation: gp-panel-in 0.22s ease;
+  }
+
+  .gp-panel[hidden] {
+    display: none;
+  }
+
+  @keyframes gp-panel-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px) scale(0.97);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .gp-panel-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .gp-cover {
+    flex: none;
+    width: 46px;
+    height: 46px;
+    border-radius: 11px;
+    object-fit: cover;
+  }
+
+  .gp-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .gp-title {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: var(--text-1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .gp-artist {
+    font-size: 12px;
+    color: var(--text-3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .gp-close {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    color: var(--text-3);
+    transition: color 0.2s ease, background 0.2s ease;
+  }
+
+  .gp-close:hover {
+    color: var(--text-1);
+    background: var(--card-soft);
+  }
+
+  .gp-close svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+
+  .gp-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .gp-time {
+    flex: none;
+    font-size: 11px;
+    color: var(--text-3);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .gp-track {
+    position: relative;
+    flex: 1;
+    height: 5px;
+    border-radius: 999px;
+    background: rgba(140, 120, 100, 0.18);
+    cursor: pointer;
+    touch-action: none;
+  }
+
+  .gp-fill {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-strong));
+    pointer-events: none;
+  }
+
+  .gp-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+    padding: 0 2px;
+  }
+
+  .gp-ctrl {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    color: var(--text-2);
+    transition: color 0.2s ease, background 0.2s ease;
+  }
+
+  .gp-ctrl:hover {
+    color: var(--accent-strong);
+    background: rgba(246, 161, 28, 0.12);
+  }
+
+  .gp-ctrl svg {
+    width: 17px;
+    height: 17px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .gp-ctrl.mode-one,
+  .gp-ctrl.mode-shuffle {
+    color: var(--accent-strong);
+  }
+
+  .gp-ctrl.mode-one::after {
+    content: '1';
+    position: absolute;
+    top: 0;
+    right: 2px;
+    font-size: 9px;
+    font-weight: 700;
+  }
+
+  .gp-ctrl.mode-shuffle svg {
+    transform: rotate(90deg);
+  }
+
+  .gp-ctrl.muted {
+    color: var(--text-3);
+  }
+
+  .gp-play {
+    width: 44px;
+    height: 44px;
+    color: #fff;
+    background: linear-gradient(160deg, var(--accent), var(--accent-strong));
+    box-shadow: 0 10px 20px -8px rgba(232, 137, 11, 0.9);
+  }
+
+  .gp-play:hover {
+    color: #fff;
+    background: linear-gradient(160deg, var(--accent), var(--accent-strong));
+    filter: brightness(1.05);
+  }
+
+  .gp-play svg {
+    width: 19px;
+    height: 19px;
+    fill: currentColor;
+    stroke: none;
+  }
+
+  .gp-list {
+    list-style: none;
+    margin: 12px 0 0;
+    padding: 10px 0 0;
+    border-top: 1px dashed var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-height: 168px;
+    overflow-y: auto;
+  }
+
+  .gp-item {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    width: 100%;
+    padding: 7px 9px;
+    border-radius: var(--radius-sm);
+    text-align: left;
+    transition: background 0.2s ease;
+  }
+
+  .gp-item:hover {
+    background: rgba(246, 161, 28, 0.08);
+  }
+
+  .gp-item.active {
+    background: var(--accent-soft);
+  }
+
+  .gp-item-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .gp-item.active .gp-item-title {
+    color: var(--accent-strong);
+  }
+
+  .gp-item-artist {
+    margin-left: auto;
+    flex: none;
+    font-size: 11.5px;
+    color: var(--text-3);
+  }
+
+  @media (max-width: 640px) {
+    .gp {
+      right: 14px;
+      bottom: 14px;
+    }
+
+    .gp-fab {
+      width: 56px;
+      height: 56px;
+    }
+
+    .gp-panel {
+      width: min(300px, calc(100vw - 28px));
+    }
+  }
+</style>

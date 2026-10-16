@@ -1,0 +1,270 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Navbar from '../components/Navbar.astro';
+import PageHeader from '../components/PageHeader.astro';
+import Footer from '../components/Footer.astro';
+import FloatingWidgets from '../components/FloatingWidgets.astro';
+
+// 统一的图标：一对代码尖括号
+const CODE_ICON = '<path d="m9 7.5-4.5 4.5L9 16.5M15 7.5l4.5 4.5L15 16.5"/>';
+
+const projects = [
+  {
+    name: 'agent-memory-kit',
+    desc: '为 LLM Agent 提供可插拔的长期记忆模块，支持读写、检索与遗忘策略。',
+    lang: 'Python',
+    color: '#4f9be8',
+    stars: '1.2k',
+    tags: ['LLM', 'Agent Memory'],
+    grad: 'linear-gradient(140deg, #ffe6c2, #f6a11c)',
+    href: 'https://github.com',
+  },
+  {
+    name: 'napmem',
+    desc: '把记忆检索从被动查询变成智能体可以学习使用的动作空间。',
+    lang: 'Python',
+    color: '#e8a13f',
+    stars: '486',
+    tags: ['Agent Memory', 'RL'],
+    grad: 'linear-gradient(140deg, #ffd9e4, #f28fb1)',
+    href: 'https://github.com',
+  },
+  {
+    name: 'fluxmem',
+    desc: '用图结构持续演化的记忆连接，让记忆在图谱上不断被改写。',
+    lang: 'Python',
+    color: '#8a63d2',
+    stars: '318',
+    tags: ['Knowledge Graph', 'LLM'],
+    grad: 'linear-gradient(140deg, #d9c9f7, #9b6ee0)',
+    href: 'https://github.com',
+  },
+  {
+    name: 'llm-judge-eval',
+    desc: '轻量的 LLM-as-a-Judge 评测脚手架，内置多样本打分与一致性校验。',
+    lang: 'TypeScript',
+    color: '#3178c6',
+    stars: '274',
+    tags: ['Evaluation', 'LLM'],
+    grad: 'linear-gradient(140deg, #c7e0fb, #5f92e6)',
+    href: 'https://github.com',
+  },
+  {
+    name: 'rl-notes',
+    desc: '强化学习学习笔记与配套代码，从 MDP 一路整理到 Agent RL。',
+    lang: 'Jupyter Notebook',
+    color: '#e8890b',
+    stars: '156',
+    tags: ['RL', '笔记'],
+    grad: 'linear-gradient(140deg, #cdf0dd, #4fbf91)',
+    href: 'https://github.com',
+  },
+  {
+    name: 'blog-astro',
+    desc: '这个博客的源码：Astro + 纯 CSS，零额外依赖，含樱花飘落与深色模式。',
+    lang: 'Astro',
+    color: '#f6a11c',
+    stars: '92',
+    tags: ['Astro', '前端'],
+    grad: 'linear-gradient(140deg, #ffe9c9, #f0b85a)',
+    href: 'https://github.com',
+  },
+];
+---
+
+<BaseLayout title="开源项目 · 无需多言 Blog" description="无需多言的公开项目与实验代码。">
+  <Navbar />
+
+  <main class="container">
+    <PageHeader title="开源项目" subtitle="一些自己写的、用得到的轮子。多数围绕 LLM、Agent 与记忆展开。" />
+
+    <div class="proj-bar">
+      <span><strong>{projects.length}</strong> 个项目</span>
+      <span class="proj-bar-dot"></span>
+      <span><strong>2.5k</strong> 累计 Star</span>
+      <span class="proj-bar-dot"></span>
+      <span>主要语言 Python / TypeScript</span>
+    </div>
+
+    <div class="proj-grid">
+      {
+        projects.map((p) => (
+          <a class="card proj-card" href={p.href} target="_blank" rel="noopener">
+            <div class="proj-top">
+              <span class="proj-icon" style={`background:${p.grad}`}>
+                <svg viewBox="0 0 24 24" aria-hidden="true" set:html={CODE_ICON} />
+              </span>
+              <span class="proj-star">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8L3.6 9.7l5.8-.8Z" />
+                </svg>
+                {p.stars}
+              </span>
+            </div>
+
+            <h2 class="proj-name">{p.name}</h2>
+            <p class="proj-desc">{p.desc}</p>
+
+            <div class="proj-foot">
+              <span class="proj-lang">
+                <i style={`background:${p.color}`} />
+                {p.lang}
+              </span>
+              <span class="proj-tags">
+                {p.tags.map((t) => <em>{t}</em>)}
+              </span>
+            </div>
+          </a>
+        ))
+      }
+    </div>
+  </main>
+
+  <Footer />
+
+  <FloatingWidgets />
+</BaseLayout>
+
+<style>
+  .proj-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding: 12px 18px;
+    border-radius: var(--radius-sm);
+    background: var(--card-soft);
+    border: 1px solid var(--border);
+    color: var(--text-2);
+    font-size: 13.5px;
+  }
+
+  .proj-bar strong {
+    color: var(--text-1);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .proj-bar-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--text-3);
+  }
+
+  .proj-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+  }
+
+  .proj-card {
+    display: flex;
+    flex-direction: column;
+    padding: 22px 22px 20px;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  }
+
+  .proj-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow);
+    border-color: rgba(246, 161, 28, 0.4);
+  }
+
+  .proj-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .proj-icon {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+  }
+
+  .proj-icon svg {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: #5a4a2e;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .proj-star {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--text-2);
+    font-size: 12.5px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .proj-star svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: var(--accent-strong);
+    stroke-width: 1.6;
+    stroke-linejoin: round;
+  }
+
+  .proj-name {
+    margin: 16px 0 0;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-1);
+    letter-spacing: 0.2px;
+  }
+
+  .proj-desc {
+    flex: 1;
+    margin: 8px 0 16px;
+    color: var(--text-2);
+    font-size: 13.5px;
+    line-height: 1.75;
+  }
+
+  .proj-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--border);
+  }
+
+  .proj-lang {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-2);
+    font-size: 12.5px;
+  }
+
+  .proj-lang i {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+  }
+
+  .proj-tags {
+    display: inline-flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  .proj-tags em {
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+    font-size: 11.5px;
+    font-style: normal;
+  }
+</style>

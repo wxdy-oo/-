@@ -1,0 +1,187 @@
+---
+import { getCollection } from 'astro:content';
+
+interface Props {
+  name?: string;
+  avatar?: string;
+  bio?: string;
+}
+
+const {
+  name = '无需多言',
+  avatar = '/images/avatar.jpg',
+  bio = 'Never forget what you are. The rest of the world will not. Wear it like armor, and it can never be used to hurt you.',
+} = Astro.props;
+
+const socials = [
+  { label: 'GitHub', href: 'https://github.com/', icon: 'github' },
+  { label: '邮箱', href: 'mailto:hi@wxyd.example.com', icon: 'mail' },
+  { label: '友链', href: '/links', icon: 'link' },
+  { label: '留言', href: '/message', icon: 'chat' },
+  { label: 'X', href: 'https://x.com/', icon: 'x' },
+  { label: 'RSS', href: '/rss.xml', icon: 'rss' },
+];
+
+const icons: Record<string, string> = {
+  github:
+    '<path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.3-3.4-1.3-.5-1.1-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.8.1-.6.3-1.1.6-1.4-2.2-.3-4.6-1.1-4.6-5 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.6 0 0 .8-.2 2.6 1a9.2 9.2 0 0 1 5 0c1.8-1.2 2.6-1 2.6-1 .5 1.3.2 2.3.1 2.6.6.7 1 1.6 1 2.7 0 3.9-2.4 4.7-4.6 5 .3.3.6.9.6 1.8v2.7c0 .3.2.6.7.5A10 10 0 0 0 12 2Z" fill="currentColor" stroke="none"/>',
+  mail: '<rect x="3" y="5.5" width="18" height="13" rx="3"/><path d="m4.5 8.5 7.5 5.5 7.5-5.5"/>',
+  link: '<path d="M9.8 14.2 14.2 9.8"/><path d="M10.8 6.9l1-1a3.4 3.4 0 0 1 4.8 4.8l-1 1"/><path d="M13.2 17.1l-1 1a3.4 3.4 0 0 1-4.8-4.8l1-1"/>',
+  chat: '<path d="M20.5 11.8a7.7 7.7 0 0 1-11.2 7L4 20.5l1.7-5.2a7.7 7.7 0 1 1 14.8-3.5Z"/>',
+  x: '<path d="M4.2 4h3l4.6 6.1L16.5 4h2.3l-6 7 6.4 9h-3l-4.9-6.6L6.2 20H4l6.3-7.3L4.2 4Z" fill="currentColor" stroke="none"/>',
+  rss: '<circle cx="6" cy="18" r="1.5" fill="currentColor" stroke="none"/><path d="M5 12a7 7 0 0 1 7 7"/><path d="M5 6.5a12.5 12.5 0 0 1 12.5 12.5"/>',
+};
+
+const postCount = (await getCollection('blog')).length;
+
+const stats = [
+  { value: String(postCount), label: '文章' },
+  { value: '8', label: '说说' },
+  { value: '60', label: '照片' },
+];
+---
+
+<section class="card profile-card">
+  <div class="avatar-ring">
+    <div class="avatar-frame">
+      <img src={avatar} alt={name} />
+    </div>
+  </div>
+
+  <h2 class="profile-name">{name}</h2>
+  <p class="profile-bio">{bio}</p>
+
+  <div class="socials">
+    {
+      socials.map((s) => (
+        <a class="social" href={s.href} title={s.label} aria-label={s.label}>
+          <svg viewBox="0 0 24 24" aria-hidden="true" set:html={icons[s.icon]} />
+        </a>
+      ))
+    }
+  </div>
+
+  <div class="profile-stats">
+    {
+      stats.map((s) => (
+        <div class="stat">
+          <strong>{s.value}</strong>
+          <span>{s.label}</span>
+        </div>
+      ))
+    }
+  </div>
+</section>
+
+<style>
+  .profile-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 26px 22px;
+    text-align: center;
+  }
+
+  .avatar-ring {
+    display: grid;
+    place-items: center;
+    padding: 5px;
+    border-radius: 22px;
+    background: linear-gradient(140deg, var(--accent), #ffd784);
+    box-shadow: 0 8px 20px -10px rgba(246, 161, 28, 0.8);
+  }
+
+  .avatar-frame {
+    width: 100px;
+    height: 100px;
+    overflow: hidden;
+    border-radius: 17px;
+    background: #fff;
+  }
+
+  .avatar-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scale(1.12);
+  }
+
+  .profile-name {
+    margin: 16px 0 12px;
+    font-family: var(--font-serif);
+    font-size: 23px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    color: var(--text-1);
+  }
+
+  .profile-bio {
+    margin: 0;
+    padding: 0 2px;
+    color: var(--text-2);
+    font-size: 13px;
+    line-height: 1.8;
+  }
+
+  .socials {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 9px;
+    margin-top: 18px;
+  }
+
+  .social {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--card-soft);
+    border: 1px solid var(--border);
+    color: var(--text-2);
+    transition: color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  }
+
+  .social:hover {
+    color: var(--accent-strong);
+    border-color: rgba(246, 161, 28, 0.5);
+    transform: translateY(-2px);
+  }
+
+  .social svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .profile-stats {
+    display: flex;
+    width: 100%;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--border);
+  }
+
+  .stat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .stat strong {
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--text-1);
+  }
+
+  .stat span {
+    font-size: 12px;
+    color: var(--text-2);
+  }
+</style>

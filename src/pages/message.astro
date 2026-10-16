@@ -1,0 +1,1139 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Navbar from '../components/Navbar.astro';
+import PageHeader from '../components/PageHeader.astro';
+import Footer from '../components/Footer.astro';
+import FloatingWidgets from '../components/FloatingWidgets.astro';
+
+const PALETTE = [
+  ['#f7b955', '#e8890b'],
+  ['#c9a2ec', '#9b6ee0'],
+  ['#9ec4f8', '#5f92e6'],
+  ['#9fe0c0', '#4fbf91'],
+  ['#f7a8c4', '#e87ba6'],
+  ['#f5d08a', '#e0a83f'],
+];
+
+const avatarGrad = (name: string) => {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  const [a, b] = PALETTE[h % PALETTE.length];
+  return `linear-gradient(140deg, ${a}, ${b})`;
+};
+
+const MOODS = [
+  { id: 'happy', emoji: '😄', label: '开心' },
+  { id: 'calm', emoji: '☕', label: '平静' },
+  { id: 'idea', emoji: '💡', label: '灵感' },
+  { id: 'fire', emoji: '🔥', label: '吐槽' },
+  { id: 'emo', emoji: '🌧️', label: 'emo' },
+];
+
+const moodOf = (id: string) => MOODS.find((m) => m.id === id) || MOODS[0];
+
+const seed = [
+  { name: '小鹿', time: '2 小时前', text: '博客的配色好舒服，樱花飘落那一下直接爱住了。', likes: 12, mood: 'happy' },
+  { name: '阿柴', time: '6 小时前', text: 'NapMem 那篇笔记写得很清楚，期待 RL 系列的更新！', likes: 8, mood: 'idea' },
+  { name: '一只猫', time: '昨天 21:40', text: '请问用的是哪套字体？看着很温柔。', likes: 5, mood: 'calm' },
+  { name: '老周', time: '2 天前', text: '路过～博客很干净，已经加入收藏夹了。', likes: 3, mood: 'calm' },
+  { name: 'Mikan', time: '3 天前', text: '从归档页一路点过来的，看得出在认真写东西，加油。', likes: 9, mood: 'happy' },
+];
+
+const hot3 = [...seed].sort((a, b) => b.likes - a.likes).slice(0, 3);
+const seedLikes = seed.reduce((s, m) => s + m.likes, 0);
+
+const QUOTES = [
+  '把复杂留给代码，把简单留给生活。',
+  '慢慢来，比较快。',
+  '写作是把模糊的想法熬成清晰的过程。',
+  '今天也是适合重构的好日子。',
+  '代码会过期，记录不会。',
+  '先完成，再完美。',
+  '保持热爱，奔赴山海。',
+];
+const now = new Date();
+const dayOfYear = Math.floor((now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86400000);
+const quote = QUOTES[dayOfYear % QUOTES.length];
+---
+
+<BaseLayout title="留言墙 · 无需多言 Blog" description="在无需多言 Blog 留下你想说的话。">
+  <Navbar />
+
+  <main class="container">
+    <PageHeader title="留言墙" subtitle="随便说点什么吧，就当在咖啡馆的便利贴上写一句。" />
+
+    <div class="msg-stats">
+      <div class="msg-stat">
+        <strong id="statTotal">{seed.length}</strong>
+        <span>条留言</span>
+      </div>
+      <div class="msg-stat">
+        <strong id="statLikes">{seedLikes}</strong>
+        <span>次点赞</span>
+      </div>
+      <div class="msg-stat">
+        <strong id="statToday">0</strong>
+        <span>今日新留言</span>
+      </div>
+      <div class="msg-stat">
+        <strong>{MOODS.length}</strong>
+        <span>种心情可贴</span>
+      </div>
+    </div>
+
+    <div class="msg-layout">
+      <div class="msg-main">
+        <section class="card msg-form-card">
+          <h2 class="msg-form-title">写下你的留言</h2>
+          <form id="msgForm" class="msg-form" autocomplete="off">
+            <div class="msg-row">
+              <label class="msg-field">
+                <span>昵称</span>
+                <div class="msg-name-row">
+                  <input id="msgName" name="name" type="text" maxlength="16" placeholder="怎么称呼你？" required />
+                  <button class="msg-dice" id="msgDice" type="button" title="随机昵称" aria-label="随机昵称">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <rect x="3.5" y="3.5" width="17" height="17" rx="4"></rect>
+                      <circle cx="8.5" cy="8.5" r="1.4"></circle>
+                      <circle cx="15.5" cy="8.5" r="1.4"></circle>
+                      <circle cx="8.5" cy="15.5" r="1.4"></circle>
+                      <circle cx="15.5" cy="15.5" r="1.4"></circle>
+                    </svg>
+                  </button>
+                </div>
+              </label>
+              <label class="msg-field">
+                <span>邮箱（选填，不会公开）</span>
+                <input id="msgMail" name="mail" type="email" placeholder="you@example.com" />
+              </label>
+            </div>
+
+            <div class="msg-field">
+              <span>此刻心情</span>
+              <div class="mood-row">
+                {
+                  MOODS.map((m, i) => (
+                    <label class="mood-chip">
+                      <input type="radio" name="mood" value={m.id} checked={i === 0} />
+                      <span>
+                        {m.emoji} {m.label}
+                      </span>
+                    </label>
+                  ))
+                }
+              </div>
+            </div>
+
+            <label class="msg-field">
+              <span>内容</span>
+              <textarea
+                id="msgText"
+                name="text"
+                rows="4"
+                maxlength="200"
+                placeholder="说点什么……"
+                required></textarea>
+            </label>
+
+            <div class="msg-actions">
+              <span class="msg-tip">
+                <span id="msgLen">0</span>/200 · 共 <strong id="msgCount">{seed.length}</strong> 条留言
+              </span>
+              <button class="msg-submit" type="submit">发布留言</button>
+            </div>
+          </form>
+        </section>
+
+        <div class="msg-tabs">
+          <button class="msg-tab active" type="button" data-sort="new">最新</button>
+          <button class="msg-tab" type="button" data-sort="hot">热门</button>
+        </div>
+
+        <ul class="msg-list" id="msgList">
+          {
+            seed.map((m) => (
+              <li class="card msg-item" data-mood={m.mood}>
+                <span class="msg-avatar" style={`background:${avatarGrad(m.name)}`}>
+                  <i>{m.name.slice(0, 1)}</i>
+                </span>
+                <div class="msg-body">
+                  <div class="msg-head">
+                    <strong class="msg-name">{m.name}</strong>
+                    <span class="msg-mood">
+                      {moodOf(m.mood).emoji} {moodOf(m.mood).label}
+                    </span>
+                    <span class="msg-time">{m.time}</span>
+                  </div>
+                  <p class="msg-text">{m.text}</p>
+                  <div class="msg-foot">
+                    <button class="msg-like" type="button" data-count={m.likes}>
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 20.3S3.6 15.2 3.6 9.4A4.6 4.6 0 0 1 12 6.7a4.6 4.6 0 0 1 8.4 2.7c0 5.8-8.4 10.9-8.4 10.9Z" />
+                      </svg>
+                      <span class="msg-like-count">{m.likes}</span>
+                    </button>
+                    <button class="msg-reply" type="button" data-name={m.name}>
+                      回复
+                    </button>
+                  </div>
+                </div>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+
+      <aside class="msg-side">
+        <section class="card side-card">
+          <h2 class="side-title">热门留言</h2>
+          <ol class="shot-list">
+            {
+              hot3.map((m, i) => (
+                <li>
+                  <span class={`shot-rank rank-${i + 1}`}>{i + 1}</span>
+                  <div class="shot-body">
+                    <strong>{m.name}</strong>
+                    <p>{m.text}</p>
+                  </div>
+                  <span class="shot-likes">♥ {m.likes}</span>
+                </li>
+              ))
+            }
+          </ol>
+        </section>
+
+        <section class="card side-card">
+          <h2 class="side-title">每日一言</h2>
+          <div class="quote-wrap">
+            <p class="quote-text">{quote}</p>
+          </div>
+        </section>
+
+        <section class="card side-card">
+          <h2 class="side-title">心情分布</h2>
+          <div class="moodbars">
+            {
+              MOODS.map((m) => (
+                <div class="moodbar" data-mood={m.id}>
+                  <span class="moodbar-label">
+                    {m.emoji} {m.label}
+                  </span>
+                  <span class="moodbar-track">
+                    <span class="moodbar-fill" style="width:0%"></span>
+                  </span>
+                  <span class="moodbar-num">0</span>
+                </div>
+              ))
+            }
+          </div>
+        </section>
+
+        <section class="card side-card">
+          <h2 class="side-title">留言须知</h2>
+          <ul class="note-list">
+            <li>友善交流，不发布广告与不当内容。</li>
+            <li>新留言只保存在你自己的浏览器里，别人看不到哦。</li>
+            <li>
+              想互换友链？先去 <a href="/links">友链页</a> 看看要求。
+            </li>
+          </ul>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <Footer />
+
+  <FloatingWidgets />
+</BaseLayout>
+
+<style>
+  .msg-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 26px;
+  }
+
+  .msg-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 16px 20px;
+    border-radius: var(--radius-sm);
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .msg-stat strong {
+    color: var(--text-1);
+    font-size: 22px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .msg-stat span {
+    color: var(--text-3);
+    font-size: 12.5px;
+  }
+
+  .msg-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 26px;
+    align-items: start;
+  }
+
+  /* ---------- 表单 ---------- */
+
+  .msg-form-card {
+    padding: 24px 26px;
+    margin-bottom: 18px;
+  }
+
+  .msg-form-title {
+    margin: 0 0 16px;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-1);
+  }
+
+  .msg-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .msg-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  .msg-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .msg-field > span {
+    color: var(--text-2);
+    font-size: 12.5px;
+  }
+
+  .msg-field input,
+  .msg-field textarea {
+    width: 100%;
+    padding: 10px 13px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--card-soft);
+    color: var(--text-1);
+    font-size: 14px;
+    outline: none;
+    resize: vertical;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .msg-field input::placeholder,
+  .msg-field textarea::placeholder {
+    color: var(--text-3);
+  }
+
+  .msg-field input:focus,
+  .msg-field textarea:focus {
+    border-color: rgba(246, 161, 28, 0.6);
+    background: var(--card);
+  }
+
+  .msg-name-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .msg-name-row input {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .msg-dice {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 42px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--card-soft);
+    color: var(--text-2);
+    transition: color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+  }
+
+  .msg-dice:hover {
+    color: var(--accent-strong);
+    border-color: rgba(246, 161, 28, 0.5);
+  }
+
+  .msg-dice:active {
+    transform: rotate(18deg) scale(0.92);
+  }
+
+  .msg-dice svg {
+    width: 19px;
+    height: 19px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+  }
+
+  .msg-dice svg circle {
+    fill: currentColor;
+    stroke: none;
+  }
+
+  .mood-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .mood-chip input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .mood-chip span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: var(--card-soft);
+    border: 1px solid var(--border);
+    color: var(--text-2);
+    font-size: 12.5px;
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .mood-chip:hover span {
+    border-color: rgba(246, 161, 28, 0.45);
+  }
+
+  .mood-chip input:checked + span {
+    background: var(--accent-soft);
+    border-color: rgba(246, 161, 28, 0.55);
+    color: var(--accent-strong);
+    font-weight: 600;
+  }
+
+  .mood-chip input:focus-visible + span {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  .msg-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .msg-tip {
+    color: var(--text-3);
+    font-size: 12.5px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .msg-tip strong {
+    color: var(--accent-strong);
+  }
+
+  .msg-submit {
+    padding: 9px 20px;
+    border-radius: 999px;
+    background: var(--accent-strong);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    transition: filter 0.2s ease, transform 0.2s ease;
+  }
+
+  .msg-submit:hover {
+    filter: brightness(1.06);
+    transform: translateY(-1px);
+  }
+
+  /* ---------- 排序 tabs ---------- */
+
+  .msg-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .msg-tab {
+    padding: 6px 16px;
+    border-radius: 999px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text-2);
+    font-size: 13px;
+    font-weight: 600;
+    transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .msg-tab:hover {
+    color: var(--accent-strong);
+    border-color: rgba(246, 161, 28, 0.45);
+  }
+
+  .msg-tab.active {
+    background: var(--accent-strong);
+    border-color: var(--accent-strong);
+    color: #fff;
+  }
+
+  /* ---------- 留言列表 ---------- */
+
+  .msg-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .msg-item {
+    display: flex;
+    gap: 14px;
+    padding: 18px 20px;
+    animation: msg-in 0.35s ease both;
+  }
+
+  @keyframes msg-in {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .msg-avatar {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    color: #fff;
+  }
+
+  .msg-avatar i {
+    font-size: 17px;
+    font-style: normal;
+    font-weight: 700;
+  }
+
+  .msg-body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .msg-head {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .msg-name {
+    color: var(--text-1);
+    font-size: 14.5px;
+    font-weight: 700;
+  }
+
+  .msg-mood {
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--card-soft);
+    border: 1px solid var(--border);
+    color: var(--text-2);
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .msg-time {
+    color: var(--text-3);
+    font-size: 12px;
+  }
+
+  .msg-text {
+    margin: 8px 0 0;
+    color: var(--text-2);
+    font-size: 14px;
+    line-height: 1.8;
+    word-break: break-word;
+    white-space: pre-wrap;
+  }
+
+  .msg-foot {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .msg-like {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 12px 4px 10px;
+    border-radius: 999px;
+    background: var(--card-soft);
+    border: 1px solid var(--border);
+    color: var(--text-2);
+    font-size: 12.5px;
+    font-variant-numeric: tabular-nums;
+    transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .msg-like:hover {
+    color: var(--accent-strong);
+    border-color: rgba(246, 161, 28, 0.45);
+  }
+
+  .msg-like svg {
+    width: 15px;
+    height: 15px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linejoin: round;
+  }
+
+  .msg-like.liked {
+    color: var(--accent-strong);
+    background: var(--accent-soft);
+    border-color: rgba(246, 161, 28, 0.45);
+  }
+
+  .msg-like.liked svg {
+    fill: var(--accent-strong);
+  }
+
+  .msg-reply {
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-3);
+    font-size: 12.5px;
+    transition: color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .msg-reply:hover {
+    color: var(--accent-strong);
+    border-color: rgba(246, 161, 28, 0.45);
+  }
+
+  /* ---------- 侧栏 ---------- */
+
+  .msg-side {
+    position: sticky;
+    top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .side-card {
+    padding: 20px;
+  }
+
+  .side-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 14px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-1);
+  }
+
+  .side-title::before {
+    content: '';
+    width: 4px;
+    height: 14px;
+    border-radius: 2px;
+    background: var(--accent);
+  }
+
+  .shot-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .shot-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .shot-rank {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    margin-top: 1px;
+    border-radius: 6px;
+    background: var(--card-soft);
+    color: var(--text-3);
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+
+  .shot-rank.rank-1 {
+    background: var(--accent-strong);
+    color: #fff;
+  }
+
+  .shot-rank.rank-2,
+  .shot-rank.rank-3 {
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+  }
+
+  .shot-body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .shot-body strong {
+    color: var(--text-1);
+    font-size: 13px;
+  }
+
+  .shot-body p {
+    display: -webkit-box;
+    margin: 3px 0 0;
+    overflow: hidden;
+    color: var(--text-2);
+    font-size: 12.5px;
+    line-height: 1.6;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .shot-likes {
+    flex: none;
+    color: var(--accent-strong);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .quote-wrap {
+    position: relative;
+    padding-left: 20px;
+  }
+
+  .quote-wrap::before {
+    content: '“';
+    position: absolute;
+    left: -2px;
+    top: -14px;
+    color: var(--accent);
+    font-family: var(--font-serif);
+    font-size: 38px;
+    opacity: 0.45;
+  }
+
+  .quote-text {
+    margin: 0;
+    color: var(--text-2);
+    font-family: var(--font-serif);
+    font-size: 14px;
+    line-height: 1.9;
+  }
+
+  .moodbar {
+    display: grid;
+    grid-template-columns: 66px 1fr 22px;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+  }
+
+  .moodbar-label {
+    color: var(--text-2);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .moodbar-track {
+    height: 6px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--card-soft);
+  }
+
+  .moodbar-fill {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-strong));
+    transition: width 0.45s ease;
+  }
+
+  .moodbar-num {
+    color: var(--text-3);
+    font-size: 12px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .note-list {
+    margin: 0;
+    padding-left: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .note-list li {
+    color: var(--text-2);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .note-list a {
+    color: var(--accent-strong);
+  }
+
+  /* ---------- 响应式 ---------- */
+
+  @media (max-width: 1040px) {
+    .msg-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .msg-side {
+      position: static;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      align-items: start;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .msg-stats {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .msg-row {
+      grid-template-columns: 1fr;
+    }
+
+    .msg-form-card {
+      padding: 20px 18px;
+    }
+  }
+</style>
+
+<script>
+  const PALETTE: string[][] = [
+    ['#f7b955', '#e8890b'],
+    ['#c9a2ec', '#9b6ee0'],
+    ['#9ec4f8', '#5f92e6'],
+    ['#9fe0c0', '#4fbf91'],
+    ['#f7a8c4', '#e87ba6'],
+    ['#f5d08a', '#e0a83f'],
+  ];
+
+  const MOODS: Record<string, { emoji: string; label: string }> = {
+    happy: { emoji: '😄', label: '开心' },
+    calm: { emoji: '☕', label: '平静' },
+    idea: { emoji: '💡', label: '灵感' },
+    fire: { emoji: '🔥', label: '吐槽' },
+    emo: { emoji: '🌧️', label: 'emo' },
+  };
+
+  const RANDOM_NAMES = [
+    '路过的猫',
+    '无糖拿铁',
+    '深夜debug人',
+    '樱花观察员',
+    '键盘诗人',
+    'bug绝缘体',
+    '咖啡因驱动',
+    '早八特困生',
+  ];
+
+  const HEART =
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.3S3.6 15.2 3.6 9.4A4.6 4.6 0 0 1 12 6.7a4.6 4.6 0 0 1 8.4 2.7c0 5.8-8.4 10.9-8.4 10.9Z"/></svg>';
+
+  const STORE = 'frud-messages';
+  const list = document.getElementById('msgList');
+  const form = document.getElementById('msgForm') as HTMLFormElement | null;
+  const countEl = document.getElementById('msgCount');
+  const statTotal = document.getElementById('statTotal');
+  const statLikes = document.getElementById('statLikes');
+  const statToday = document.getElementById('statToday');
+  const msgLen = document.getElementById('msgLen');
+  const textInput = document.getElementById('msgText') as HTMLTextAreaElement | null;
+
+  const grad = (name: string) => {
+    let h = 0;
+    for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+    const [a, b] = PALETTE[h % PALETTE.length];
+    return `linear-gradient(140deg, ${a}, ${b})`;
+  };
+
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const fmt = (ts: number) => {
+    const d = new Date(ts);
+    return `${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
+  const likeCountOf = (li: Element) =>
+    Number((li.querySelector('.msg-like') as HTMLElement | null)?.dataset.count || '0');
+
+  /** 用 DOM API 组装留言，避免把用户输入当成 HTML 解析 */
+  function buildMessage(name: string, text: string, timeLabel: string, likes: number, mood: string): HTMLElement {
+    const li = document.createElement('li');
+    li.className = 'card msg-item';
+    li.dataset.mood = mood;
+
+    const avatar = document.createElement('span');
+    avatar.className = 'msg-avatar';
+    avatar.style.background = grad(name);
+    const initial = document.createElement('i');
+    initial.textContent = name.trim().charAt(0) || '?';
+    avatar.appendChild(initial);
+
+    const body = document.createElement('div');
+    body.className = 'msg-body';
+
+    const head = document.createElement('div');
+    head.className = 'msg-head';
+    const nameEl = document.createElement('strong');
+    nameEl.className = 'msg-name';
+    nameEl.textContent = name;
+    const moodEl = document.createElement('span');
+    moodEl.className = 'msg-mood';
+    const m = MOODS[mood] || MOODS.calm;
+    moodEl.textContent = `${m.emoji} ${m.label}`;
+    const timeEl = document.createElement('span');
+    timeEl.className = 'msg-time';
+    timeEl.textContent = timeLabel;
+    head.append(nameEl, moodEl, timeEl);
+
+    const p = document.createElement('p');
+    p.className = 'msg-text';
+    p.textContent = text;
+
+    const foot = document.createElement('div');
+    foot.className = 'msg-foot';
+    const like = document.createElement('button');
+    like.className = 'msg-like';
+    like.type = 'button';
+    like.dataset.count = String(likes);
+    like.innerHTML = HEART;
+    const cnt = document.createElement('span');
+    cnt.className = 'msg-like-count';
+    cnt.textContent = String(likes);
+    like.appendChild(cnt);
+    const reply = document.createElement('button');
+    reply.className = 'msg-reply';
+    reply.type = 'button';
+    reply.dataset.name = name;
+    reply.textContent = '回复';
+    foot.append(like, reply);
+
+    body.append(head, p, foot);
+    li.append(avatar, body);
+    return li;
+  }
+
+  /* ---------- 统计与排序 ---------- */
+
+  let minSeq = -1;
+
+  function stampInitialSeq() {
+    list?.querySelectorAll('.msg-item').forEach((li, i) => {
+      (li as HTMLElement).dataset.seq = String(i);
+    });
+  }
+
+  function updateCount() {
+    if (countEl && list) countEl.textContent = String(list.children.length);
+    if (statTotal && list) statTotal.textContent = String(list.children.length);
+  }
+
+  function updateLikes() {
+    if (!statLikes || !list) return;
+    const total = [...list.children].reduce((s, li) => s + likeCountOf(li), 0);
+    statLikes.textContent = String(total);
+  }
+
+  function computeToday() {
+    if (!statToday) return;
+    try {
+      const arr = JSON.parse(localStorage.getItem(STORE) || '[]') as Array<{ time: number }>;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      statToday.textContent = String(arr.filter((m) => m.time >= today.getTime()).length);
+    } catch {
+      /* 忽略损坏数据 */
+    }
+  }
+
+  function updateMoodBars() {
+    if (!list) return;
+    const counts: Record<string, number> = {};
+    list.querySelectorAll('.msg-item').forEach((li) => {
+      const mood = (li as HTMLElement).dataset.mood || 'calm';
+      counts[mood] = (counts[mood] || 0) + 1;
+    });
+    const max = Math.max(1, ...Object.values(counts));
+    document.querySelectorAll('.moodbar').forEach((bar) => {
+      const mood = (bar as HTMLElement).dataset.mood || '';
+      const n = counts[mood] || 0;
+      const fill = bar.querySelector('.moodbar-fill') as HTMLElement | null;
+      const num = bar.querySelector('.moodbar-num');
+      if (fill) fill.style.width = `${(n / max) * 100}%`;
+      if (num) num.textContent = String(n);
+    });
+  }
+
+  function sortList(mode: string) {
+    if (!list) return;
+    const children = [...list.children] as HTMLElement[];
+    children.sort((a, b) =>
+      mode === 'hot'
+        ? likeCountOf(b) - likeCountOf(a) || Number(a.dataset.seq) - Number(b.dataset.seq)
+        : Number(a.dataset.seq) - Number(b.dataset.seq)
+    );
+    children.forEach((c) => list.appendChild(c));
+  }
+
+  /* ---------- 本地持久化 ---------- */
+
+  function loadStored() {
+    if (!list) return;
+    try {
+      const arr = JSON.parse(localStorage.getItem(STORE) || '[]') as Array<{
+        name: string;
+        text: string;
+        time: number;
+        mood?: string;
+      }>;
+      arr.reverse().forEach((m) => {
+        const el = buildMessage(m.name, m.text, fmt(m.time), 0, m.mood || 'calm');
+        el.dataset.seq = String(minSeq--);
+        list.prepend(el);
+      });
+    } catch {
+      /* 本地数据损坏时忽略即可 */
+    }
+  }
+
+  function persist(name: string, text: string, mood: string) {
+    try {
+      const arr = JSON.parse(localStorage.getItem(STORE) || '[]');
+      arr.unshift({ name, text, time: Date.now(), mood });
+      localStorage.setItem(STORE, JSON.stringify(arr.slice(0, 50)));
+    } catch {
+      /* 隐私模式下写入失败，不影响当前会话 */
+    }
+  }
+
+  /* ---------- 事件 ---------- */
+
+  list?.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+
+    const likeBtn = target.closest('.msg-like') as HTMLElement | null;
+    if (likeBtn) {
+      const cnt = likeBtn.querySelector('.msg-like-count');
+      const next = Number(likeBtn.dataset.count || '0') + 1;
+      likeBtn.dataset.count = String(next);
+      if (cnt) cnt.textContent = String(next);
+      likeBtn.classList.add('liked');
+      updateLikes();
+      return;
+    }
+
+    const replyBtn = target.closest('.msg-reply') as HTMLElement | null;
+    if (replyBtn && textInput) {
+      const name = replyBtn.dataset.name || '';
+      textInput.value = `@${name} `;
+      textInput.dispatchEvent(new Event('input'));
+      textInput.focus();
+      document.getElementById('msgForm')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  });
+
+  document.querySelectorAll('.msg-tab').forEach((tab) => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.msg-tab').forEach((t) => t.classList.toggle('active', t === tab));
+      sortList((tab as HTMLElement).dataset.sort || 'new');
+    });
+  });
+
+  textInput?.addEventListener('input', () => {
+    if (msgLen) msgLen.textContent = String(textInput.value.length);
+  });
+
+  document.getElementById('msgDice')?.addEventListener('click', () => {
+    const nameInput = document.getElementById('msgName') as HTMLInputElement | null;
+    if (!nameInput) return;
+    const pool = RANDOM_NAMES.filter((n) => n !== nameInput.value);
+    nameInput.value = pool[Math.floor(Math.random() * pool.length)];
+    nameInput.focus();
+  });
+
+  form?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const nameInput = document.getElementById('msgName') as HTMLInputElement | null;
+    const name = (nameInput?.value || '').trim() || '匿名';
+    const text = (textInput?.value || '').trim();
+    if (!text || !list) return;
+    const mood =
+      (form.querySelector('input[name="mood"]:checked') as HTMLInputElement | null)?.value || 'calm';
+
+    const el = buildMessage(name, text, '刚刚', 0, mood);
+    el.dataset.seq = String(minSeq--);
+    list.prepend(el);
+    persist(name, text, mood);
+    form.reset();
+    if (msgLen) msgLen.textContent = '0';
+    updateCount();
+    updateLikes();
+    computeToday();
+    updateMoodBars();
+
+    // 若当前是热门排序，发表后回到最新
+    const newTab = document.querySelector('.msg-tab[data-sort="new"]');
+    if (newTab && !newTab.classList.contains('active')) (newTab as HTMLElement).click();
+  });
+
+  /* ---------- 初始化 ---------- */
+
+  stampInitialSeq();
+  loadStored();
+  updateCount();
+  updateLikes();
+  computeToday();
+  updateMoodBars();
+</script>

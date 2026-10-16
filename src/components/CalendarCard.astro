@@ -1,0 +1,160 @@
+---
+const WEEK = ['日', '一', '二', '三', '四', '五', '六'];
+---
+
+<section class="card cal-card">
+  <div class="cal-head">
+    <h2 class="cal-title" id="calTitle">----</h2>
+    <div class="cal-nav">
+      <button class="cal-btn" id="calPrev" type="button" aria-label="上个月">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14.5 6-6 6 6 6"></path></svg>
+      </button>
+      <button class="cal-btn" id="calNext" type="button" aria-label="下个月">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 6 6 6-6 6"></path></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="cal-week">
+    {WEEK.map((w) => <span>{w}</span>)}
+  </div>
+
+  <div class="cal-days" id="calDays"></div>
+</section>
+
+<style>
+  .cal-card {
+    padding: 22px 20px;
+  }
+
+  .cal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .cal-title {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-1);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cal-nav {
+    display: flex;
+    gap: 6px;
+  }
+
+  .cal-btn {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    color: var(--text-2);
+    transition: color 0.2s ease, background 0.2s ease;
+  }
+
+  .cal-btn:hover {
+    color: var(--accent-strong);
+    background: var(--card-soft);
+  }
+
+  .cal-btn svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .cal-week {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    margin-bottom: 8px;
+    color: var(--text-3);
+    font-size: 12px;
+    text-align: center;
+  }
+
+  .cal-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px 0;
+  }
+
+  :global(.cal-cell) {
+    display: grid;
+    place-items: center;
+    height: 34px;
+    border-radius: 10px;
+    color: var(--text-1);
+    font-size: 13.5px;
+    font-variant-numeric: tabular-nums;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+
+  :global(.cal-cell:not(.empty):not(.today):hover) {
+    background: var(--card-soft);
+  }
+
+  :global(.cal-cell.empty) {
+    visibility: hidden;
+  }
+
+  :global(.cal-cell.today) {
+    background: linear-gradient(150deg, var(--accent), var(--accent-strong));
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 6px 14px -8px rgba(232, 137, 11, 0.95);
+  }
+</style>
+
+<script>
+  const WEEK = ['日', '一', '二', '三', '四', '五', '六'];
+  const title = document.getElementById('calTitle');
+  const daysEl = document.getElementById('calDays');
+  const prevBtn = document.getElementById('calPrev');
+  const nextBtn = document.getElementById('calNext');
+
+  const view = new Date();
+  view.setDate(1);
+
+  function render() {
+    const year = view.getFullYear();
+    const month = view.getMonth();
+    const firstWeekday = new Date(year, month, 1).getDay();
+    const totalDays = new Date(year, month + 1, 0).getDate();
+
+    const today = new Date();
+    const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
+
+    if (title) title.textContent = `${year}年${month + 1}月`;
+    if (!daysEl) return;
+
+    let html = '';
+    for (let i = 0; i < firstWeekday; i++) html += '<span class="cal-cell empty"></span>';
+    for (let d = 1; d <= totalDays; d++) {
+      const isToday = isCurrentMonth && d === today.getDate();
+      html += `<span class="cal-cell${isToday ? ' today' : ''}">${d}</span>`;
+    }
+    daysEl.innerHTML = html;
+  }
+
+  prevBtn?.addEventListener('click', () => {
+    view.setMonth(view.getMonth() - 1);
+    render();
+  });
+
+  nextBtn?.addEventListener('click', () => {
+    view.setMonth(view.getMonth() + 1);
+    render();
+  });
+
+  render();
+</script>

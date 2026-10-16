@@ -1,0 +1,57 @@
+---
+interface Props {
+  title: string;
+  subtitle?: string;
+}
+
+const { title, subtitle } = Astro.props;
+---
+
+<header class="page-head">
+  <h1 class="page-title">{title}</h1>
+  {subtitle && <p class="page-sub">{subtitle}</p>}
+</header>
+
+<style>
+  .page-head {
+    /* 顶栏为绝对定位，这里留出与顶栏的间距 */
+    padding-top: 96px;
+    margin-bottom: 26px;
+  }
+
+  .page-title {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    color: var(--text-1);
+  }
+
+  .page-title::after {
+    content: '';
+    display: block;
+    width: 46px;
+    height: 3px;
+    margin-top: 13px;
+    border-radius: 3px;
+    background: var(--accent);
+  }
+
+  .page-sub {
+    margin: 14px 0 0;
+    color: var(--text-2);
+    font-size: 14.5px;
+    line-height: 1.8;
+  }
+
+  @media (max-width: 640px) {
+    .page-head {
+      padding-top: 84px;
+    }
+
+    .page-title {
+      font-size: 26px;
+    }
+  }
+</style>
